@@ -1,0 +1,21 @@
+---
+export interface Props {
+  title: string;
+  content: string;
+}
+
+const { title, content } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <Fragment set:html={content} />
+  </body>
+</html>

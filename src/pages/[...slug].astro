@@ -1,0 +1,21 @@
+﻿---
+import Layout from "../components/Layout.astro";
+import { PageGeneratorService } from "../services/page-generator";
+import { parseSlugData } from "../utils/slug-parser";
+import { config, validateConfig } from "../lib/config";
+
+export const prerender = false;
+
+validateConfig();
+
+const slugData = parseSlugData(Astro.params, Astro.url);
+
+const pageGenerator = new PageGeneratorService(config.gemini.apiKey);
+
+const result = await pageGenerator.generatePage(slugData);
+
+const content = result.content || "Fehler beim Laden der Seite";
+const title = result.error ? config.app.errorTitle : slugData.query || config.app.defaultTitle;
+---
+
+<Layout title={title} content={content} />
