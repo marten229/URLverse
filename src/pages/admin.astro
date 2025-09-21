@@ -1,0 +1,109 @@
+---
+import { getAllFlavors, getFlavorById } from "../lib/prompt-flavors";
+import { FlavorService } from "../services/flavor-service";
+
+export const prerender = false;
+
+const flavors = getAllFlavors();
+
+const currentFlavorId = FlavorService.getCurrentFlavorFromRequest(Astro.request);
+const currentFlavor = getFlavorById(currentFlavorId);
+
+if (Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+    const selectedFlavorId = formData.get("flavorId") as string;
+    
+    if (selectedFlavorId && FlavorService.isValidFlavor(selectedFlavorId)) {
+      
+      const cookieValue = FlavorService.saveFlavorToCookie(selectedFlavorId);
+      
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `/admin?success=flavor-changed&flavor=${selectedFlavorId}`,
+          'Set-Cookie': cookieValue
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Fehler beim Ändern des Flavors:", error);
+  }
+}
+const url = new URL(Astro.request.url);
+const success = url.searchParams.get("success");
+const selectedFlavorFromUrl = url.searchParams.get("flavor");
+---
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URLverse Admin - Flavor Management</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body class="admin">
+  <div class="admin__container">
+    <a href="/" class="admin__back-link">← Zurück zur URLverse</a>
+    
+    <div class="admin__header">
+      <h1 class="admin__title">🎨 Flavor Management</h1>
+      <p class="admin__subtitle">Wähle den Stil für deine generierten Seiten</p>
+    </div>
+    
+    {success === "flavor-changed" && (
+      <div class="admin__success">
+        ✅ Flavor erfolgreich geändert zu: {selectedFlavorFromUrl}
+      </div>
+    )}
+    
+    <div class="admin__current-flavor">
+      <h2>🌟 Aktueller Flavor</h2>
+      <strong>{currentFlavor.name}</strong> - {currentFlavor.description}
+    </div>
+    
+    <div class="admin__flavors-grid">
+      {flavors.map((flavor) => (
+        <div class={`admin__flavor-card ${flavor.id === currentFlavor.id ? 'admin__flavor-card--current' : ''}`}>
+          <h3 class="admin__flavor-title">{flavor.name}</h3>
+          <p class="admin__flavor-description">{flavor.description}</p>
+          
+          {flavor.examples && flavor.examples.length > 0 && (
+            <div class="admin__flavor-examples">
+              <h4>Beispiele</h4>
+              <ul>
+                {flavor.examples.map((example) => (
+                  <li>{example}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          <form method="POST">
+            <input type="hidden" name="flavorId" value={flavor.id} />
+            <button 
+              type="submit" 
+              class="admin__select-button"
+              disabled={flavor.id === currentFlavor.id}
+            >
+              {flavor.id === currentFlavor.id ? '✓ Aktiv' : 'Auswählen'}
+            </button>
+          </form>
+        </div>
+      ))}
+    </div>
+    
+    <div class="admin__test-section">
+      <h3 class="admin__test-title">🧪 Test-URLs</h3>
+      <p class="admin__test-description">Teste die verschiedenen Flavors mit diesen Beispiel-URLs:</p>
+      <a href="/blog/ki-revolution-2024" class="admin__test-url">/blog/ki-revolution-2024</a>
+      <a href="/shop/zeitreise-gadgets" class="admin__test-url">/shop/zeitreise-gadgets</a>
+      <a href="/unternehmen/quantum-solutions" class="admin__test-url">/unternehmen/quantum-solutions</a>
+      <a href="/medizin/nano-chirurgie" class="admin__test-url">/medizin/nano-chirurgie</a>
+      <a href="/forum/diskussion/virtual-reality" class="admin__test-url">/forum/diskussion/virtual-reality</a>
+    </div>
+  </div>
+</body>
+</html>

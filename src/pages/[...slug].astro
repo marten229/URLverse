@@ -1,21 +1,81 @@
 ﻿---
 import Layout from "../components/Layout.astro";
 import { PageGeneratorService } from "../services/page-generator";
+import { FlavorService } from "../services/flavor-service";
 import { parseSlugData } from "../utils/slug-parser";
-import { config, validateConfig } from "../lib/config";
+import { config, validateApiKey } from "../lib/config";
 
 export const prerender = false;
 
-validateConfig();
-
 const slugData = parseSlugData(Astro.params, Astro.url);
+const currentFlavorId = FlavorService.getCurrentFlavorFromRequest(Astro.request);
 
-const pageGenerator = new PageGeneratorService(config.gemini.apiKey);
+// API Key Validation
+const apiKeyValidation = validateApiKey(Astro.request);
 
-const result = await pageGenerator.generatePage(slugData);
+let result;
+let title = slugData.query || config.app.defaultTitle;
+
+if (!apiKeyValidation.isValid) {
+  // Zeige Fehlermeldung wenn kein API Key vorhanden
+  result = {
+    content: `
+      <div style="padding: 2rem; font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; text-align: center;">
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 2rem; margin-bottom: 2rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🔑</div>
+          <h1 style="color: #856404; margin: 0 0 1rem 0;">API Key erforderlich</h1>
+          <p style="color: #856404; margin: 0 0 1.5rem 0;">
+            ${apiKeyValidation.error}
+          </p>
+          <p style="color: #666; font-size: 0.9rem; margin-bottom: 2rem;">
+            Setzen Sie Ihren persönlichen Gemini API Key in den Einstellungen, um generierte Inhalte zu sehen.
+          </p>
+          
+          <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="/" style="
+              display: inline-block;
+              padding: 0.75rem 1.5rem;
+              background: #667eea;
+              color: white;
+              text-decoration: none;
+              border-radius: 6px;
+              font-weight: 500;
+              transition: background 0.2s ease;
+            ">
+              🏠 Zur Startseite
+            </a>
+          </div>
+        </div>
+        
+        <details style="text-align: left; background: #f8f9fa; border-radius: 8px; padding: 1rem;">
+          <summary style="cursor: pointer; font-weight: 600; color: #667eea; margin-bottom: 1rem;">
+            Wie bekomme ich einen API Key?
+          </summary>
+          <ol style="margin: 0; padding-left: 1.5rem; color: #666; line-height: 1.6;">
+            <li>Gehen Sie zu <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #667eea;">Google AI Studio</a></li>
+            <li>Melden Sie sich mit Ihrem Google-Konto an</li>
+            <li>Klicken Sie auf "Create API Key"</li>
+            <li>Kopieren Sie den generierten Key</li>
+            <li>Öffnen Sie das Menü (☰) und gehen Sie zu den Einstellungen</li>
+            <li>Fügen Sie Ihren API Key ein und speichern Sie ihn</li>
+          </ol>
+        </details>
+      </div>
+    `,
+    error: apiKeyValidation.error
+  };
+  title = config.app.errorTitle;
+} else {
+  // Normale Seitengenerierung mit gültigem API Key
+  const pageGenerator = new PageGeneratorService(apiKeyValidation.apiKey, Astro.request);
+  result = await pageGenerator.generatePage(slugData, currentFlavorId);
+  
+  if (result.error) {
+    title = config.app.errorTitle;
+  }
+}
 
 const content = result.content || "Fehler beim Laden der Seite";
-const title = result.error ? config.app.errorTitle : slugData.query || config.app.defaultTitle;
 ---
 
 <Layout title={title} content={content} />

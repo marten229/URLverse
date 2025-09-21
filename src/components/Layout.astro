@@ -2,9 +2,10 @@
 export interface Props {
   title: string;
   content: string;
+  className?: string;
 }
 
-const { title, content } = Astro.props;
+const { title, content, className = '' } = Astro.props;
 ---
 
 <!DOCTYPE html>
@@ -14,8 +15,10 @@ const { title, content } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/src/styles/main.css" />
   </head>
-  <body>
+  <body class={className}>
     <Fragment set:html={content} />
+    <script type="module" src="/src/scripts/navigation-init.ts"></script>
   </body>
 </html>

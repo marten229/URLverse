@@ -1,0 +1,207 @@
+/**
+ * Card Component Styles
+ * Wiederverwendbare Card-Komponenten
+ */
+
+.card {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Card Parts */
+.card__header {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid var(--color-border-light);
+  background-color: var(--color-bg-secondary);
+}
+
+.card__body {
+  padding: var(--spacing-lg) var(--spacing-xl);
+}
+
+.card__footer {
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-top: 1px solid var(--color-border-light);
+  background-color: var(--color-bg-secondary);
+}
+
+.card__title {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.card__subtitle {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+.card__text {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
+
+.card__text:last-child {
+  margin-bottom: 0;
+}
+
+/* Card Variants */
+.card--ghost {
+  background-color: var(--color-bg-overlay);
+  border: 1px solid var(--color-border-overlay);
+  backdrop-filter: blur(10px);
+  color: var(--color-text-white);
+}
+
+.card--ghost:hover {
+  background-color: var(--color-bg-overlay-hover);
+  border-color: var(--color-border-overlay-hover);
+}
+
+.card--ghost .card__title {
+  color: var(--color-text-white);
+}
+
+.card--ghost .card__text {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.card--ghost .card__header,
+.card--ghost .card__footer {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-border-overlay);
+}
+
+.card--elevated {
+  box-shadow: var(--shadow-lg);
+}
+
+.card--elevated:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-4px);
+}
+
+.card--interactive {
+  cursor: pointer;
+  user-select: none;
+}
+
+.card--interactive:hover {
+  border-color: var(--color-primary);
+}
+
+.card--interactive:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-md);
+}
+
+/* Card Sizes */
+.card--sm {
+  border-radius: var(--radius-lg);
+}
+
+.card--sm .card__header,
+.card--sm .card__body,
+.card--sm .card__footer {
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.card--lg {
+  border-radius: var(--radius-2xl);
+}
+
+.card--lg .card__header,
+.card--lg .card__body,
+.card--lg .card__footer {
+  padding: var(--spacing-xl) var(--spacing-2xl);
+}
+
+/* Card Colors */
+.card--primary {
+  border-color: var(--color-primary);
+}
+
+.card--primary .card__header {
+  background-color: var(--color-primary);
+  color: var(--color-text-white);
+  border-color: var(--color-primary);
+}
+
+.card--success {
+  border-color: var(--color-success);
+}
+
+.card--success .card__header {
+  background-color: var(--color-success);
+  color: var(--color-text-white);
+  border-color: var(--color-success);
+}
+
+.card--warning {
+  border-color: var(--color-warning);
+}
+
+.card--warning .card__header {
+  background-color: var(--color-warning);
+  color: var(--color-text-white);
+  border-color: var(--color-warning);
+}
+
+.card--error {
+  border-color: var(--color-error);
+}
+
+.card--error .card__header {
+  background-color: var(--color-error);
+  color: var(--color-text-white);
+  border-color: var(--color-error);
+}
+
+/* Card Grid */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.card-grid--sm {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.card-grid--lg {
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-xl);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .card__header,
+  .card__body,
+  .card__footer {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .card--lg .card__header,
+  .card--lg .card__body,
+  .card--lg .card__footer {
+    padding: var(--spacing-lg) var(--spacing-xl);
+  }
+}

@@ -1,0 +1,27 @@
+/**
+ * Main Stylesheet
+ * Importiert alle CSS-Module in der richtigen Reihenfolge
+ */
+
+/* 1. CSS Custom Properties (Variablen) */
+@import './variables.css';
+
+/* 2. Base Styles (Reset, Normalize, Typography) */
+@import './base.css';
+
+/* 3. Utility Classes */
+@import './utilities.css';
+
+/* 4. Component Styles */
+@import './components/button.css';
+@import './components/form.css';
+@import './components/card.css';
+@import './components/navigation.css';
+@import './components/settings.css';
+
+/* 5. Page-specific Styles */
+@import './pages/homepage.css';
+@import './pages/admin.css';
+
+/* 6. Global Overrides (falls nötig) */
+/* Hier können globale Anpassungen gemacht werden */
