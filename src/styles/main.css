@@ -16,7 +16,10 @@
 @import './components/button.css';
 @import './components/form.css';
 @import './components/card.css';
-@import './components/navigation.css';
+@import './components/card.css';
+/* Navigation styles moved to Shadow DOM in NavigationMenu.ts */
+/* @import './components/navigation.css'; */
+@import './components/settings.css';
 @import './components/settings.css';
 
 /* 5. Page-specific Styles */

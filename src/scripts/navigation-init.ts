@@ -40,7 +40,7 @@ class NavigationInitializer {
    */
   private setupNavigation(): void {
     const currentPath = window.location.pathname;
-    
+
     // Nur auf generierten Seiten (nicht Homepage oder Admin)
     if (this.shouldShowNavigation(currentPath)) {
       this.createNavigation();
@@ -78,7 +78,7 @@ class NavigationInitializer {
    */
   private checkApiKeyStatus(): void {
     const hasApiKey = this.settingsManager.hasValidApiKey();
-    
+
     if (!hasApiKey) {
       this.showApiKeyWarning();
     }
@@ -239,7 +239,7 @@ class NavigationInitializer {
         }
       }
     `;
-    
+
     document.head.appendChild(style);
     document.body.appendChild(warning);
 
@@ -248,11 +248,8 @@ class NavigationInitializer {
     const dismissBtn = warning.querySelector('#dismissWarning');
 
     openSettingsBtn?.addEventListener('click', () => {
-      this.navigationMenu?.toggle();
-      setTimeout(() => {
-        const settingsBtn = document.querySelector('#openSettings') as HTMLElement;
-        settingsBtn?.click();
-      }, 100);
+      // Direkt die Einstellungen öffnen, ohne Umweg über das Menü
+      this.navigationMenu?.openSettings();
       this.removeWarning(warning);
     });
 
@@ -278,7 +275,7 @@ class NavigationInitializer {
         document.body.removeChild(warning);
       }
     }, 300);
-    
+
     sessionStorage.setItem('apiKeyWarningShown', 'true');
   }
 
@@ -289,7 +286,7 @@ class NavigationInitializer {
     document.addEventListener('keydown', (e) => {
       // Nur wenn kein Input Element fokussiert ist
       if (document.activeElement?.tagName.toLowerCase() === 'input' ||
-          document.activeElement?.tagName.toLowerCase() === 'textarea') {
+        document.activeElement?.tagName.toLowerCase() === 'textarea') {
         return;
       }
 
@@ -299,20 +296,20 @@ class NavigationInitializer {
           e.preventDefault();
           this.navigationMenu?.toggle();
           break;
-        
+
         case ',':
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             this.openSettingsDirectly();
           }
           break;
-        
+
         case 'h':
         case 'H':
           e.preventDefault();
           window.location.href = '/';
           break;
-        
+
         case 'r':
         case 'R':
           if (e.ctrlKey || e.metaKey) {
@@ -331,10 +328,9 @@ class NavigationInitializer {
     if (!this.navigationMenu) {
       this.createNavigation();
     }
-    
-    // Settings Panel erstellen und öffnen
-    const settingsBtn = document.querySelector('#openSettings') as HTMLElement;
-    settingsBtn?.click();
+
+    // Einstellungen direkt öffnen
+    this.navigationMenu?.openSettings();
   }
 
   /**

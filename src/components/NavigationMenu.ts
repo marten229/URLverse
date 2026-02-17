@@ -6,10 +6,13 @@
 import { SettingsUI } from './SettingsUI';
 import { SettingsManager } from '../utils/settings-manager';
 import { getAllFlavors } from '../lib/prompt-flavors';
+import { navigationStyles } from './NavigationMenu.styles';
 import type { NavigationConfig } from '../types';
 
 export class NavigationMenu {
   private container: HTMLElement | null = null;
+  private host: HTMLElement | null = null;
+  private shadow: ShadowRoot | null = null;
   private readonly settingsUI: SettingsUI;
   private readonly settingsManager: SettingsManager;
   private isOpen = false;
@@ -21,14 +24,33 @@ export class NavigationMenu {
 
   /**
    * Erstellt das Navigationsmenü und fügt es zur Seite hinzu
+   * Uses Shadow DOM for style isolation
    */
   create(): HTMLElement {
+    // 1. Create Host Element
+    this.host = document.createElement('div');
+    this.host.id = 'urlverse-nav-host';
+    this.host.style.position = 'fixed';
+    this.host.style.zIndex = '1000'; // Ensure host is on top
+
+    // 2. Attach Shadow Root
+    this.shadow = this.host.attachShadow({ mode: 'open' });
+
+    // 3. Inject Styles
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = navigationStyles;
+    this.shadow.appendChild(styleSheet);
+
+    // 4. Create Container (Internal)
     this.container = document.createElement('div');
     this.container.className = 'nav-menu';
     this.container.innerHTML = this.getMenuHTML();
-    
+
+    // 5. Append Container to Shadow Root
+    this.shadow.appendChild(this.container);
+
     this.attachEventListeners();
-    return this.container;
+    return this.host;
   }
 
   /**
@@ -38,7 +60,7 @@ export class NavigationMenu {
     const flavors = getAllFlavors();
     const currentPath = window.location.pathname;
     const settings = this.settingsManager.getSettings();
-    
+
     return `
       ${this.getTouchAreaHTML()}
       ${this.getToggleButtonHTML()}
@@ -105,10 +127,10 @@ export class NavigationMenu {
     const hasApiKey = settings.apiKey;
     return `
       <div class="nav-menu__status">
-        ${hasApiKey 
-          ? '<span class="nav-menu__status-indicator nav-menu__status-indicator--success">🟢</span> API Key aktiv'
-          : '<span class="nav-menu__status-indicator nav-menu__status-indicator--error">🔴</span> Kein API Key'
-        }
+        ${hasApiKey
+        ? '<span class="nav-menu__status-indicator nav-menu__status-indicator--success">🟢</span> API Key aktiv'
+        : '<span class="nav-menu__status-indicator nav-menu__status-indicator--error">🔴</span> Kein API Key'
+      }
       </div>
     `;
   }
@@ -252,10 +274,10 @@ export class NavigationMenu {
     if (this.container) {
       this.container.classList.add('nav-menu--open');
       this.isOpen = true;
-      
+
       const toggleBtn = this.container.querySelector('.nav-menu__toggle');
       toggleBtn?.setAttribute('aria-expanded', 'true');
-      
+
       // Focus management
       const closeBtn = this.container.querySelector('.nav-menu__close') as HTMLElement;
       closeBtn?.focus();
@@ -269,7 +291,7 @@ export class NavigationMenu {
     if (this.container) {
       this.container.classList.remove('nav-menu--open');
       this.isOpen = false;
-      
+
       const toggleBtn = this.container.querySelector('.nav-menu__toggle');
       toggleBtn?.setAttribute('aria-expanded', 'false');
     }
@@ -289,14 +311,14 @@ export class NavigationMenu {
   /**
    * Einstellungen öffnen
    */
-  private openSettings(): void {
+  public openSettings(): void {
     // Settings Panel zur Seite hinzufügen falls noch nicht vorhanden
     let settingsPanel = document.querySelector('.settings-panel');
     if (!settingsPanel) {
       settingsPanel = this.settingsUI.create();
       document.body.appendChild(settingsPanel);
     }
-    
+
     this.settingsUI.open();
     this.close(); // Navigation menü schließen
   }
@@ -306,7 +328,7 @@ export class NavigationMenu {
    */
   private changeFlavor(flavorId: string): void {
     this.settingsManager.setDefaultFlavor(flavorId as any);
-    
+
     // URL mit neuem Flavor-Parameter neu laden
     const url = new URL(window.location.href);
     url.searchParams.set('flavor', flavorId);
@@ -331,7 +353,7 @@ export class NavigationMenu {
       '/gaming/bewusstsein-simulation',
       '/wissenschaft/parallel-universum-forschung'
     ];
-    
+
     const randomPath = randomPaths[Math.floor(Math.random() * randomPaths.length)];
     window.location.href = randomPath;
   }
@@ -342,7 +364,7 @@ export class NavigationMenu {
   private async shareCurrentUrl(): Promise<void> {
     const url = window.location.href;
     const title = document.title || 'URLverse - Generierte Seite';
-    
+
     try {
       if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         await navigator.share({ title, url });
@@ -385,11 +407,11 @@ export class NavigationMenu {
     textArea.style.position = 'fixed';
     textArea.style.opacity = '0';
     textArea.style.pointerEvents = 'none';
-    
+
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     try {
       const successful = document.execCommand('copy');
       if (successful) {
@@ -421,12 +443,12 @@ export class NavigationMenu {
    */
   private updateStatusIndicator(): void {
     if (!this.container) return;
-    
+
     const settings = this.settingsManager.getSettings();
     const statusElement = this.container.querySelector('.nav-menu__status');
-    
+
     if (statusElement) {
-      statusElement.innerHTML = settings.apiKey 
+      statusElement.innerHTML = settings.apiKey
         ? '<span class="nav-menu__status-indicator nav-menu__status-indicator--success">🟢</span> API Key aktiv'
         : '<span class="nav-menu__status-indicator nav-menu__status-indicator--error">🔴</span> Kein API Key';
     }
@@ -439,18 +461,18 @@ export class NavigationMenu {
     const notification = document.createElement('div');
     notification.className = `nav-menu__notification nav-menu__notification--${type}`;
     notification.textContent = message;
-    
+
     document.body.appendChild(notification);
-    
+
     // Animation und Auto-remove
     requestAnimationFrame(() => {
       notification.classList.add('nav-menu__notification--show');
     });
-    
+
     const timeout = setTimeout(() => {
       this.removeNotification(notification);
     }, this.getNotificationDuration(type));
-    
+
     // Click to dismiss
     notification.addEventListener('click', () => {
       clearTimeout(timeout);
@@ -496,8 +518,8 @@ export class NavigationMenu {
    * Cleanup
    */
   destroy(): void {
-    if (this.container && this.container.parentNode) {
-      this.container.parentNode.removeChild(this.container);
+    if (this.host && this.host.parentNode) {
+      this.host.parentNode.removeChild(this.host);
     }
     this.settingsUI.destroy();
   }
