@@ -53,7 +53,7 @@ class NavigationInitializer {
    */
   private shouldShowNavigation(path: string): boolean {
     // Navigation auf Homepage und Admin-Seite ausblenden
-    const excludePaths = ['/', '/admin'];
+    const excludePaths = ['/', '/flavor', '/admin'];
     return !excludePaths.includes(path);
   }
 

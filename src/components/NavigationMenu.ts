@@ -120,9 +120,9 @@ export class NavigationMenu {
           <span class="nav-menu__link-icon">🏠</span>
           <span class="nav-menu__link-text">Startseite</span>
         </a>
-        <a href="/admin" class="nav-menu__link ${currentPath === '/admin' ? 'nav-menu__link--active' : ''}">
+        <a href="/flavor" class="nav-menu__link ${currentPath === '/flavor' || currentPath === '/admin' ? 'nav-menu__link--active' : ''}">
           <span class="nav-menu__link-icon">🎨</span>
-          <span class="nav-menu__link-text">Flavor Management</span>
+          <span class="nav-menu__link-text">Stil auswählen</span>
         </a>
       </nav>
     `;
