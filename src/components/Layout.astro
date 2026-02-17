@@ -1,14 +1,14 @@
 ---
 export interface Props {
   title: string;
-  content: string;
+  content?: string;
   className?: string;
 }
 
-const { title, content, className = '' } = Astro.props;
+const { title, content, className = "" } = Astro.props;
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
@@ -18,7 +18,7 @@ const { title, content, className = '' } = Astro.props;
     <link rel="stylesheet" href="/src/styles/main.css" />
   </head>
   <body class={className}>
-    <Fragment set:html={content} />
+    {content ? <Fragment set:html={content} /> : <slot />}
     <script type="module" src="/src/scripts/navigation-init.ts"></script>
   </body>
 </html>

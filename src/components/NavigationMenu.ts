@@ -1,73 +1,60 @@
 /**
  * Navigation Menu Component
- * Erstellt ein aufklappbares Hamburger-Menü für generierte Seiten
+ * Web Component implementation with Shadow DOM for style isolation
  */
 
 import { SettingsUI } from './SettingsUI';
 import { SettingsManager } from '../utils/settings-manager';
 import { getAllFlavors } from '../lib/prompt-flavors';
-import { navigationStyles } from './NavigationMenu.styles';
+import navigationStyles from '../styles/components/navigation.css?inline';
 import type { NavigationConfig } from '../types';
 
-export class NavigationMenu {
-  private container: HTMLElement | null = null;
-  private host: HTMLElement | null = null;
-  private shadow: ShadowRoot | null = null;
-  private readonly settingsUI: SettingsUI;
-  private readonly settingsManager: SettingsManager;
+export class NavigationMenu extends HTMLElement {
+  private shadow: ShadowRoot;
+  private settingsManager: SettingsManager;
   private isOpen = false;
 
-  constructor(_config: NavigationConfig = {}) {
-    this.settingsUI = new SettingsUI();
+  constructor() {
+    super();
+    this.shadow = this.attachShadow({ mode: 'open' });
     this.settingsManager = SettingsManager.getInstance();
   }
 
-  /**
-   * Erstellt das Navigationsmenü und fügt es zur Seite hinzu
-   * Uses Shadow DOM for style isolation
-   */
-  create(): HTMLElement {
-    // 1. Create Host Element
-    this.host = document.createElement('div');
-    this.host.id = 'urlverse-nav-host';
-    this.host.style.position = 'fixed';
-    this.host.style.zIndex = '1000'; // Ensure host is on top
-
-    // 2. Attach Shadow Root
-    this.shadow = this.host.attachShadow({ mode: 'open' });
-
-    // 3. Inject Styles
-    const styleSheet = document.createElement('style');
-    styleSheet.textContent = navigationStyles;
-    this.shadow.appendChild(styleSheet);
-
-    // 4. Create Container (Internal)
-    this.container = document.createElement('div');
-    this.container.className = 'nav-menu';
-    this.container.innerHTML = this.getMenuHTML();
-
-    // 5. Append Container to Shadow Root
-    this.shadow.appendChild(this.container);
-
+  connectedCallback() {
+    this.render();
     this.attachEventListeners();
-    return this.host;
+
+    // Listen for settings changes to update UI
+    this.settingsManager.addListener(() => {
+      this.updateStatusIndicator();
+    });
+  }
+
+  disconnectedCallback() {
+    // Cleanup if needed
   }
 
   /**
-   * HTML-Template für das Navigationsmenü
+   * Initializes and renders the component
    */
-  private getMenuHTML(): string {
+  private render(): void {
     const flavors = getAllFlavors();
     const currentPath = window.location.pathname;
     const settings = this.settingsManager.getSettings();
 
-    return `
-      ${this.getTouchAreaHTML()}
-      ${this.getToggleButtonHTML()}
-      ${this.getOverlayHTML()}
-      ${this.getPanelHTML(flavors, currentPath, settings)}
+    // Injects styles and HTML structure
+    this.shadow.innerHTML = `
+      <style>${navigationStyles}</style>
+      <div class="nav-menu">
+        ${this.getTouchAreaHTML()}
+        ${this.getToggleButtonHTML()}
+        ${this.getOverlayHTML()}
+        ${this.getPanelHTML(flavors, currentPath, settings)}
+      </div>
     `;
   }
+
+  // --- HTML Templates ---
 
   private getTouchAreaHTML(): string {
     return '<div class="nav-menu__touch-area"></div>';
@@ -211,133 +198,89 @@ export class NavigationMenu {
     `;
   }
 
-  /**
-   * Event Listeners anhängen
-   */
-  private attachEventListeners(): void {
-    if (!this.container) return;
+  // --- Event Handling ---
 
-    // Toggle Button und Touch Area
-    const toggleBtn = this.container.querySelector('.nav-menu__toggle');
-    const touchArea = this.container.querySelector('.nav-menu__touch-area');
-    const closeBtn = this.container.querySelector('.nav-menu__close');
-    const overlay = this.container.querySelector('.nav-menu__overlay');
+  private attachEventListeners(): void {
+    // Note: We search within this.shadow, not the document
+    const container = this.shadow.querySelector('.nav-menu');
+    if (!container) return;
+
+    const toggleBtn = this.shadow.querySelector('.nav-menu__toggle');
+    const touchArea = this.shadow.querySelector('.nav-menu__touch-area');
+    const closeBtn = this.shadow.querySelector('.nav-menu__close');
+    const overlay = this.shadow.querySelector('.nav-menu__overlay');
 
     toggleBtn?.addEventListener('click', () => this.toggle());
     touchArea?.addEventListener('click', () => this.toggle());
     closeBtn?.addEventListener('click', () => this.close());
     overlay?.addEventListener('click', () => this.close());
 
-    // Settings Button
-    const settingsBtn = this.container.querySelector('#openSettings');
-    settingsBtn?.addEventListener('click', () => {
+    this.shadow.querySelector('#openSettings')?.addEventListener('click', () => {
       this.openSettings();
     });
 
-    // Flavor Buttons
-    const flavorButtons = this.container.querySelectorAll('.nav-menu__flavor-btn');
+    // Flavor Buttons - using delegation or direct attachment
+    const flavorButtons = this.shadow.querySelectorAll('.nav-menu__flavor-btn');
     flavorButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         const flavorId = btn.getAttribute('data-flavor');
-        if (flavorId) {
-          this.changeFlavor(flavorId);
-        }
+        if (flavorId) this.changeFlavor(flavorId);
       });
     });
 
     // Quick Actions
-    const randomPageBtn = this.container.querySelector('#randomPage');
-    const shareUrlBtn = this.container.querySelector('#shareUrl');
-    const reloadBtn = this.container.querySelector('#reloadWithFlavor');
+    this.shadow.querySelector('#randomPage')?.addEventListener('click', () => this.generateRandomPage());
+    this.shadow.querySelector('#shareUrl')?.addEventListener('click', () => this.shareCurrentUrl());
+    this.shadow.querySelector('#reloadWithFlavor')?.addEventListener('click', () => this.reloadWithCurrentFlavor());
 
-    randomPageBtn?.addEventListener('click', () => this.generateRandomPage());
-    shareUrlBtn?.addEventListener('click', () => this.shareCurrentUrl());
-    reloadBtn?.addEventListener('click', () => this.reloadWithCurrentFlavor());
-
-    // Keyboard Navigation
+    // Keyboard Navigation (Global listener is needed for Escape key)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isOpen) {
         this.close();
       }
     });
-
-    // Settings Manager Updates
-    this.settingsManager.addListener(() => {
-      this.updateStatusIndicator();
-    });
   }
 
-  /**
-   * Menü öffnen
-   */
+  // --- Public Methods ---
+
   open(): void {
-    if (this.container) {
-      this.container.classList.add('nav-menu--open');
+    const container = this.shadow.querySelector('.nav-menu');
+    if (container) {
+      container.classList.add('nav-menu--open');
       this.isOpen = true;
-
-      const toggleBtn = this.container.querySelector('.nav-menu__toggle');
-      toggleBtn?.setAttribute('aria-expanded', 'true');
-
-      // Focus management
-      const closeBtn = this.container.querySelector('.nav-menu__close') as HTMLElement;
-      closeBtn?.focus();
+      this.shadow.querySelector('.nav-menu__toggle')?.setAttribute('aria-expanded', 'true');
+      (this.shadow.querySelector('.nav-menu__close') as HTMLElement)?.focus();
     }
   }
 
-  /**
-   * Menü schließen
-   */
   close(): void {
-    if (this.container) {
-      this.container.classList.remove('nav-menu--open');
+    const container = this.shadow.querySelector('.nav-menu');
+    if (container) {
+      container.classList.remove('nav-menu--open');
       this.isOpen = false;
-
-      const toggleBtn = this.container.querySelector('.nav-menu__toggle');
-      toggleBtn?.setAttribute('aria-expanded', 'false');
+      this.shadow.querySelector('.nav-menu__toggle')?.setAttribute('aria-expanded', 'false');
     }
   }
 
-  /**
-   * Menü togglen
-   */
   toggle(): void {
-    if (this.isOpen) {
-      this.close();
-    } else {
-      this.open();
-    }
+    this.isOpen ? this.close() : this.open();
   }
 
-  /**
-   * Einstellungen öffnen
-   */
-  public openSettings(): void {
-    // Settings Panel zur Seite hinzufügen falls noch nicht vorhanden
-    let settingsPanel = document.querySelector('.settings-panel');
-    if (!settingsPanel) {
-      settingsPanel = this.settingsUI.create();
-      document.body.appendChild(settingsPanel);
-    }
-
-    this.settingsUI.open();
-    this.close(); // Navigation menü schließen
+  openSettings(): void {
+    const settings = SettingsUI.initialize();
+    settings.open();
+    this.close();
   }
 
-  /**
-   * Flavor wechseln und Seite neu laden
-   */
+  // --- Logic Methods (Preserved) ---
+
   private changeFlavor(flavorId: string): void {
     this.settingsManager.setDefaultFlavor(flavorId as any);
-
-    // URL mit neuem Flavor-Parameter neu laden
     const url = new URL(window.location.href);
     url.searchParams.set('flavor', flavorId);
     window.location.href = url.toString();
   }
 
-  /**
-   * Zufällige Seite generieren
-   */
   private generateRandomPage(): void {
     const randomPaths = [
       '/blog/ki-revolution-2025',
@@ -353,18 +296,13 @@ export class NavigationMenu {
       '/gaming/bewusstsein-simulation',
       '/wissenschaft/parallel-universum-forschung'
     ];
-
     const randomPath = randomPaths[Math.floor(Math.random() * randomPaths.length)];
     window.location.href = randomPath;
   }
 
-  /**
-   * Aktuelle URL teilen
-   */
   private async shareCurrentUrl(): Promise<void> {
     const url = window.location.href;
     const title = document.title || 'URLverse - Generierte Seite';
-
     try {
       if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         await navigator.share({ title, url });
@@ -373,63 +311,46 @@ export class NavigationMenu {
         await this.copyUrlToClipboard(url);
       }
     } catch (error) {
+      // Ignore abort errors
       if (error instanceof Error && error.name !== 'AbortError') {
-        console.error('Fehler beim Teilen:', error);
+        console.error('Share error:', error);
         await this.copyUrlToClipboard(url);
       }
     }
   }
 
-  /**
-   * URL in Zwischenablage kopieren
-   */
   private async copyUrlToClipboard(url: string): Promise<void> {
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(url);
         this.showNotification('URL in Zwischenablage kopiert!', 'success');
       } else {
-        // Fallback für ältere Browser oder unsichere Kontexte
         this.fallbackCopyToClipboard(url);
       }
     } catch (error) {
-      console.error('Fehler beim Kopieren:', error);
-      this.showNotification('Fehler beim Kopieren der URL', 'error');
+      console.error('Copy error:', error);
+      this.showNotification('Fehler beim Kopieren', 'error');
     }
   }
 
-  /**
-   * Fallback für Copy-to-Clipboard
-   */
   private fallbackCopyToClipboard(url: string): void {
     const textArea = document.createElement('textarea');
     textArea.value = url;
-    textArea.style.position = 'fixed';
+    textArea.style.position = 'fixed'; // Avoid scrolling to bottom
     textArea.style.opacity = '0';
-    textArea.style.pointerEvents = 'none';
-
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-
     try {
       const successful = document.execCommand('copy');
-      if (successful) {
-        this.showNotification('URL in Zwischenablage kopiert!', 'success');
-      } else {
-        throw new Error('Copy command failed');
-      }
-    } catch (error) {
-      console.error('Fallback copy failed:', error);
+      if (successful) this.showNotification('URL in Zwischenablage kopiert!', 'success');
+      else this.showNotification('Kopieren fehlgeschlagen', 'error');
+    } catch (err) {
       this.showNotification('Kopieren fehlgeschlagen', 'error');
-    } finally {
-      document.body.removeChild(textArea);
     }
+    document.body.removeChild(textArea);
   }
 
-  /**
-   * Seite mit aktuellem Flavor neu laden
-   */
   private reloadWithCurrentFlavor(): void {
     const settings = this.settingsManager.getSettings();
     const url = new URL(window.location.href);
@@ -438,15 +359,11 @@ export class NavigationMenu {
     window.location.href = url.toString();
   }
 
-  /**
-   * Status-Indikator aktualisieren
-   */
   private updateStatusIndicator(): void {
-    if (!this.container) return;
-
+    const container = this.shadow.querySelector('.nav-menu');
+    if (!container) return;
     const settings = this.settingsManager.getSettings();
-    const statusElement = this.container.querySelector('.nav-menu__status');
-
+    const statusElement = this.shadow.querySelector('.nav-menu__status');
     if (statusElement) {
       statusElement.innerHTML = settings.apiKey
         ? '<span class="nav-menu__status-indicator nav-menu__status-indicator--success">🟢</span> API Key aktiv'
@@ -454,73 +371,54 @@ export class NavigationMenu {
     }
   }
 
-  /**
-   * Notification anzeigen mit erweiterten Optionen
-   */
   private showNotification(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info'): void {
     const notification = document.createElement('div');
     notification.className = `nav-menu__notification nav-menu__notification--${type}`;
     notification.textContent = message;
 
-    document.body.appendChild(notification);
+    // Notifications are appended to Shadow DOM to benefit from isolated styles
+    this.shadow.appendChild(notification);
 
-    // Animation und Auto-remove
     requestAnimationFrame(() => {
       notification.classList.add('nav-menu__notification--show');
     });
 
     const timeout = setTimeout(() => {
       this.removeNotification(notification);
-    }, this.getNotificationDuration(type));
+    }, 3000);
 
-    // Click to dismiss
     notification.addEventListener('click', () => {
       clearTimeout(timeout);
       this.removeNotification(notification);
     });
   }
 
-  /**
-   * Notification entfernen
-   */
   private removeNotification(notification: HTMLElement): void {
     notification.classList.remove('nav-menu__notification--show');
     setTimeout(() => {
-      if (document.body.contains(notification)) {
-        document.body.removeChild(notification);
-      }
+      if (notification.parentNode) notification.parentNode.removeChild(notification);
     }, 300);
   }
 
   /**
-   * Ermittelt die Anzeigedauer basierend auf dem Typ
+   * Static Factory Method for compatibility
    */
-  private getNotificationDuration(type: string): number {
-    switch (type) {
-      case 'error': return 5000;
-      case 'warning': return 4000;
-      case 'success': return 3000;
-      default: return 2000;
+  static initialize(_config: NavigationConfig = {}): NavigationMenu {
+    // Check if already defined
+    if (!customElements.get('urlverse-nav')) {
+      customElements.define('urlverse-nav', NavigationMenu);
     }
+
+    // Check if already exists in DOM
+    let menu = document.querySelector('urlverse-nav') as NavigationMenu;
+    if (!menu) {
+      menu = document.createElement('urlverse-nav') as NavigationMenu;
+      document.body.appendChild(menu);
+    }
+    return menu;
   }
 
-  /**
-   * Menü initialisieren und zur Seite hinzufügen
-   */
-  static initialize(): NavigationMenu {
-    const navMenu = new NavigationMenu();
-    const menuElement = navMenu.create();
-    document.body.appendChild(menuElement);
-    return navMenu;
-  }
-
-  /**
-   * Cleanup
-   */
   destroy(): void {
-    if (this.host && this.host.parentNode) {
-      this.host.parentNode.removeChild(this.host);
-    }
-    this.settingsUI.destroy();
+    this.remove();
   }
 }

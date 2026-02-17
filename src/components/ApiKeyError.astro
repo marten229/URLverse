@@ -1,0 +1,129 @@
+---
+interface Props {
+    error: string;
+}
+
+const { error } = Astro.props;
+---
+
+<div class="api-key-error-container">
+    <div class="error-card">
+        <div class="icon">🔑</div>
+        <h1 class="error-title">API Key erforderlich</h1>
+        <p class="error-message">
+            {error}
+        </p>
+        <p class="error-hint">
+            Setzen Sie Ihren persönlichen Gemini API Key in den Einstellungen,
+            um generierte Inhalte zu sehen.
+        </p>
+
+        <div class="action-buttons">
+            <a href="/" class="home-button"> 🏠 Zur Startseite </a>
+        </div>
+    </div>
+
+    <details class="help-section">
+        <summary class="help-summary"> Wie bekomme ich einen API Key? </summary>
+        <ol class="help-list">
+            <li>
+                Gehen Sie zu <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank">Google AI Studio</a>
+            </li>
+            <li>Melden Sie sich mit Ihrem Google-Konto an</li>
+            <li>Klicken Sie auf "Create API Key"</li>
+            <li>Kopieren Sie den generierten Key</li>
+            <li>Öffnen Sie das Menü (☰) und gehen Sie zu den Einstellungen</li>
+            <li>Fügen Sie Ihren API Key ein und speichern Sie ihn</li>
+        </ol>
+    </details>
+</div>
+
+<style>
+    .api-key-error-container {
+        padding: 2rem;
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 2rem auto;
+        text-align: center;
+    }
+
+    .error-card {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .error-title {
+        color: #856404;
+        margin: 0 0 1rem 0;
+        font-size: 2em; /* Ensure consistent heading size */
+        font-weight: bold;
+    }
+
+    .error-message {
+        color: #856404;
+        margin: 0 0 1.5rem 0;
+    }
+
+    .error-hint {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 2rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .home-button {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: #667eea;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: background 0.2s ease;
+    }
+
+    .home-button:hover {
+        background: #5a67d8;
+    }
+
+    .help-section {
+        text-align: left;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .help-summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 1rem;
+    }
+
+    .help-list {
+        margin: 0;
+        padding-left: 1.5rem;
+        color: #666;
+        line-height: 1.6;
+    }
+
+    .help-list a {
+        color: #667eea;
+    }
+</style>

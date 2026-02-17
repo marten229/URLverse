@@ -1,152 +1,151 @@
 /**
  * Settings UI Component
- * Erstellt und verwaltet das Einstellungs-Interface
+ * Web Component implementation with Shadow DOM for style isolation
  */
 
 import { SettingsManager } from '../utils/settings-manager';
 import { getAllFlavors } from '../lib/prompt-flavors';
 import type { UserSettings } from '../types';
 
-export class SettingsUI {
+import settingsStyles from '../styles/components/settings.css?inline';
+
+export class SettingsUI extends HTMLElement {
+  private shadow: ShadowRoot;
   private settingsManager: SettingsManager;
-  private container: HTMLElement | null = null;
   private isOpen = false;
 
   constructor() {
+    super();
+    this.shadow = this.attachShadow({ mode: 'open' });
     this.settingsManager = SettingsManager.getInstance();
-    this.settingsManager.addListener(this.onSettingsChange.bind(this));
   }
 
-  /**
-   * Erstellt die Settings UI
-   */
-  create(): HTMLElement {
-    this.container = document.createElement('div');
-    this.container.className = 'settings-panel';
-    this.container.innerHTML = this.getSettingsHTML();
-    
+  connectedCallback() {
+    this.render();
     this.attachEventListeners();
+
+    this.settingsManager.addListener(this.onSettingsChange.bind(this));
     this.updateUI();
-    
-    return this.container;
   }
 
-  /**
-   * HTML-Template für die Einstellungen
-   */
-  private getSettingsHTML(): string {
+  disconnectedCallback() {
+    // Cleanup
+  }
+
+  private render(): void {
     const settings = this.settingsManager.getSettings();
     const flavors = getAllFlavors();
-    
-    return `
-      <div class="settings-panel__header">
-        <h3>⚙️ Einstellungen</h3>
-        <button class="settings-panel__close" type="button" aria-label="Schließen">×</button>
-      </div>
-      
-      <div class="settings-panel__content">
-        <!-- API Key Section -->
-        <div class="settings-section">
-          <h4>🔑 Gemini API Key</h4>
-          <p class="settings-description">
-            Setzen Sie Ihren persönlichen Google Gemini API Key für die Content-Generierung.
-          </p>
-          <div class="settings-field">
-            <input 
-              type="password" 
-              id="apiKeyInput" 
-              placeholder="Ihr Gemini API Key..."
-              value="${settings.apiKey || ''}"
-              class="settings-input"
-            />
-            <div class="settings-field-actions">
-              <button type="button" id="saveApiKey" class="btn btn--primary">Speichern</button>
-              <button type="button" id="clearApiKey" class="btn btn--secondary">Löschen</button>
+
+    this.shadow.innerHTML = `
+      <style>${settingsStyles}</style>
+      <div class="settings-overlay"></div>
+      <div class="settings-panel">
+        <div class="settings-panel__header">
+          <h3>⚙️ Einstellungen</h3>
+          <button class="settings-panel__close" type="button" aria-label="Schließen">×</button>
+        </div>
+        
+        <div class="settings-panel__content">
+          <!-- API Key Section -->
+          <div class="settings-section">
+            <h4>🔑 Gemini API Key</h4>
+            <p class="settings-description">
+              Setzen Sie Ihren persönlichen Google Gemini API Key für die Content-Generierung.
+            </p>
+            <div class="settings-field">
+              <input 
+                type="password" 
+                id="apiKeyInput" 
+                placeholder="Ihr Gemini API Key..."
+                value="${settings.apiKey || ''}"
+                class="settings-input"
+              />
+              <div class="settings-field-actions">
+                <button type="button" id="saveApiKey" class="btn btn--primary">Speichern</button>
+                <button type="button" id="clearApiKey" class="btn btn--secondary">Löschen</button>
+              </div>
+            </div>
+            <div class="settings-status" id="apiKeyStatus">
+              ${settings.apiKey ? '✅ API Key gesetzt' : '⚠️ Kein API Key gesetzt'}
+            </div>
+            <details class="settings-help">
+              <summary>Wie bekomme ich einen API Key?</summary>
+              <p>
+                1. Gehen Sie zu <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a><br>
+                2. Klicken Sie auf "Create API Key"<br>
+                3. Kopieren Sie den generierten Key hierher
+              </p>
+            </details>
+          </div>
+
+          <!-- Flavor Section -->
+          <div class="settings-section">
+            <h4>🎨 Standard-Stil</h4>
+            <p class="settings-description">
+              Wählen Sie den Standard-Stil für generierte Inhalte.
+            </p>
+            <select id="flavorSelect" class="settings-select">
+              ${flavors.map(flavor => `
+                <option value="${flavor.id}" ${settings.defaultFlavor === flavor.id ? 'selected' : ''}>
+                  ${flavor.name}
+                </option>
+              `).join('')}
+            </select>
+          </div>
+
+          <!-- Theme Section -->
+          <div class="settings-section">
+            <h4>🌙 Design-Modus</h4>
+            <div class="settings-radio-group">
+              <label class="settings-radio">
+                <input type="radio" name="theme" value="light" ${settings.theme === 'light' ? 'checked' : ''}>
+                <span>☀️ Hell</span>
+              </label>
+              <label class="settings-radio">
+                <input type="radio" name="theme" value="dark" ${settings.theme === 'dark' ? 'checked' : ''}>
+                <span>🌙 Dunkel</span>
+              </label>
+              <label class="settings-radio">
+                <input type="radio" name="theme" value="auto" ${settings.theme === 'auto' ? 'checked' : ''}>
+                <span>🔄 Automatisch</span>
+              </label>
             </div>
           </div>
-          <div class="settings-status" id="apiKeyStatus">
-            ${settings.apiKey ? '✅ API Key gesetzt' : '⚠️ Kein API Key gesetzt'}
+
+          <!-- Language Section -->
+          <div class="settings-section">
+            <h4>🌍 Sprache</h4>
+            <select id="languageSelect" class="settings-select">
+              <option value="de" ${settings.language === 'de' ? 'selected' : ''}>🇩🇪 Deutsch</option>
+              <option value="en" ${settings.language === 'en' ? 'selected' : ''}>🇺🇸 English</option>
+            </select>
           </div>
-          <details class="settings-help">
-            <summary>Wie bekomme ich einen API Key?</summary>
-            <p>
-              1. Gehen Sie zu <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a><br>
-              2. Klicken Sie auf "Create API Key"<br>
-              3. Kopieren Sie den generierten Key hierher
-            </p>
-          </details>
-        </div>
 
-        <!-- Flavor Section -->
-        <div class="settings-section">
-          <h4>🎨 Standard-Stil</h4>
-          <p class="settings-description">
-            Wählen Sie den Standard-Stil für generierte Inhalte.
-          </p>
-          <select id="flavorSelect" class="settings-select">
-            ${flavors.map(flavor => `
-              <option value="${flavor.id}" ${settings.defaultFlavor === flavor.id ? 'selected' : ''}>
-                ${flavor.name}
-              </option>
-            `).join('')}
-          </select>
-        </div>
-
-        <!-- Theme Section -->
-        <div class="settings-section">
-          <h4>🌙 Design-Modus</h4>
-          <div class="settings-radio-group">
-            <label class="settings-radio">
-              <input type="radio" name="theme" value="light" ${settings.theme === 'light' ? 'checked' : ''}>
-              <span>☀️ Hell</span>
-            </label>
-            <label class="settings-radio">
-              <input type="radio" name="theme" value="dark" ${settings.theme === 'dark' ? 'checked' : ''}>
-              <span>🌙 Dunkel</span>
-            </label>
-            <label class="settings-radio">
-              <input type="radio" name="theme" value="auto" ${settings.theme === 'auto' ? 'checked' : ''}>
-              <span>🔄 Automatisch</span>
-            </label>
+          <!-- Export/Import Section -->
+          <div class="settings-section">
+            <h4>💾 Einstellungen verwalten</h4>
+            <div class="settings-field-actions">
+              <button type="button" id="exportSettings" class="btn btn--secondary">Export</button>
+              <button type="button" id="importSettings" class="btn btn--secondary">Import</button>
+            </div>
+            <input type="file" id="importFile" accept=".json" style="display: none;">
           </div>
-        </div>
-
-        <!-- Language Section -->
-        <div class="settings-section">
-          <h4>🌍 Sprache</h4>
-          <select id="languageSelect" class="settings-select">
-            <option value="de" ${settings.language === 'de' ? 'selected' : ''}>🇩🇪 Deutsch</option>
-            <option value="en" ${settings.language === 'en' ? 'selected' : ''}>🇺🇸 English</option>
-          </select>
-        </div>
-
-        <!-- Export/Import Section -->
-        <div class="settings-section">
-          <h4>💾 Einstellungen verwalten</h4>
-          <div class="settings-field-actions">
-            <button type="button" id="exportSettings" class="btn btn--secondary">Export</button>
-            <button type="button" id="importSettings" class="btn btn--secondary">Import</button>
-          </div>
-          <input type="file" id="importFile" accept=".json" style="display: none;">
         </div>
       </div>
     `;
   }
 
-  /**
-   * Event Listeners anhängen
-   */
   private attachEventListeners(): void {
-    if (!this.container) return;
+    const closeBtn = this.shadow.querySelector('.settings-panel__close');
+    const overlay = this.shadow.querySelector('.settings-overlay');
 
-    // Close button
-    const closeBtn = this.container.querySelector('.settings-panel__close');
     closeBtn?.addEventListener('click', () => this.close());
+    overlay?.addEventListener('click', () => this.close());
 
     // API Key
-    const saveApiKeyBtn = this.container.querySelector('#saveApiKey');
-    const clearApiKeyBtn = this.container.querySelector('#clearApiKey');
-    const apiKeyInput = this.container.querySelector('#apiKeyInput') as HTMLInputElement;
+    const saveApiKeyBtn = this.shadow.querySelector('#saveApiKey');
+    const clearApiKeyBtn = this.shadow.querySelector('#clearApiKey');
+    const apiKeyInput = this.shadow.querySelector('#apiKeyInput') as HTMLInputElement;
 
     saveApiKeyBtn?.addEventListener('click', () => {
       const apiKey = apiKeyInput.value.trim();
@@ -162,22 +161,20 @@ export class SettingsUI {
       this.showApiKeyStatus('cleared');
     });
 
-    // Enter key for API Key
     apiKeyInput?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        const saveBtn = saveApiKeyBtn as HTMLButtonElement;
-        saveBtn?.click();
+        (saveApiKeyBtn as HTMLButtonElement)?.click();
       }
     });
 
     // Flavor selection
-    const flavorSelect = this.container.querySelector('#flavorSelect') as HTMLSelectElement;
+    const flavorSelect = this.shadow.querySelector('#flavorSelect') as HTMLSelectElement;
     flavorSelect?.addEventListener('change', () => {
       this.settingsManager.setDefaultFlavor(flavorSelect.value as any);
     });
 
     // Theme selection
-    const themeRadios = this.container.querySelectorAll('input[name="theme"]');
+    const themeRadios = this.shadow.querySelectorAll('input[name="theme"]');
     themeRadios.forEach(radio => {
       radio.addEventListener('change', (e) => {
         const target = e.target as HTMLInputElement;
@@ -188,26 +185,23 @@ export class SettingsUI {
     });
 
     // Language selection
-    const languageSelect = this.container.querySelector('#languageSelect') as HTMLSelectElement;
+    const languageSelect = this.shadow.querySelector('#languageSelect') as HTMLSelectElement;
     languageSelect?.addEventListener('change', () => {
       this.settingsManager.setLanguage(languageSelect.value as any);
     });
 
     // Export/Import
-    const exportBtn = this.container.querySelector('#exportSettings');
-    const importBtn = this.container.querySelector('#importSettings');
-    const importFile = this.container.querySelector('#importFile') as HTMLInputElement;
+    const exportBtn = this.shadow.querySelector('#exportSettings');
+    const importBtn = this.shadow.querySelector('#importSettings');
+    const importFile = this.shadow.querySelector('#importFile') as HTMLInputElement;
 
     exportBtn?.addEventListener('click', () => this.exportSettings());
     importBtn?.addEventListener('click', () => importFile?.click());
     importFile?.addEventListener('change', () => this.importSettings(importFile));
   }
 
-  /**
-   * API Key Status anzeigen
-   */
   private showApiKeyStatus(type: 'success' | 'error' | 'cleared'): void {
-    const status = this.container?.querySelector('#apiKeyStatus');
+    const status = this.shadow.querySelector('#apiKeyStatus');
     if (!status) return;
 
     switch (type) {
@@ -225,34 +219,25 @@ export class SettingsUI {
         break;
     }
 
-    // Auto-hide nach 3 Sekunden
     setTimeout(() => {
-      if (status) {
-        status.className = 'settings-status';
-      }
+      if (status) status.className = 'settings-status';
     }, 3000);
   }
 
-  /**
-   * Einstellungen exportieren
-   */
   private exportSettings(): void {
     const settings = this.settingsManager.exportSettings();
     const blob = new Blob([settings], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    
+
     const a = document.createElement('a');
     a.href = url;
     a.download = `urlverse-settings-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
+    this.shadow.appendChild(a); // Append to shadow to key it somewhat contained
     a.click();
-    document.body.removeChild(a);
+    this.shadow.removeChild(a);
     URL.revokeObjectURL(url);
   }
 
-  /**
-   * Einstellungen importieren
-   */
   private importSettings(fileInput: HTMLInputElement): void {
     const file = fileInput.files?.[0];
     if (!file) return;
@@ -262,9 +247,7 @@ export class SettingsUI {
       try {
         const content = e.target?.result as string;
         const success = this.settingsManager.importSettings(content);
-        
         if (success) {
-          this.updateUI();
           alert('Einstellungen erfolgreich importiert!');
         } else {
           alert('Fehler beim Importieren der Einstellungen.');
@@ -274,71 +257,71 @@ export class SettingsUI {
       }
     };
     reader.readAsText(file);
-    
-    // Input zurücksetzen
     fileInput.value = '';
   }
 
-  /**
-   * UI bei Einstellungsänderungen aktualisieren
-   */
   private onSettingsChange(_settings: UserSettings): void {
     this.updateUI();
   }
 
-  /**
-   * UI-Elemente mit aktuellen Einstellungen aktualisieren
-   */
   private updateUI(): void {
-    if (!this.container) return;
-    
     const settings = this.settingsManager.getSettings();
-    
-    // API Key Status
-    const apiKeyStatus = this.container.querySelector('#apiKeyStatus');
+    const apiKeyStatus = this.shadow.querySelector('#apiKeyStatus');
     if (apiKeyStatus) {
       apiKeyStatus.textContent = settings.apiKey ? '✅ API Key gesetzt' : '⚠️ Kein API Key gesetzt';
     }
+
+    // Update other inputs if needed to reflect external changes
+    const apiKeyInput = this.shadow.querySelector('#apiKeyInput') as HTMLInputElement;
+    if (apiKeyInput && document.activeElement !== apiKeyInput) {
+      apiKeyInput.value = settings.apiKey || '';
+    }
   }
 
-  /**
-   * Panel öffnen
-   */
   open(): void {
-    if (this.container) {
-      this.container.classList.add('settings-panel--open');
+    const panel = this.shadow.querySelector('.settings-panel');
+    const overlay = this.shadow.querySelector('.settings-overlay');
+    if (panel && overlay) {
+      panel.classList.add('settings-panel--open');
+      overlay.classList.add('settings-overlay--open');
       this.isOpen = true;
     }
   }
 
-  /**
-   * Panel schließen
-   */
   close(): void {
-    if (this.container) {
-      this.container.classList.remove('settings-panel--open');
+    const panel = this.shadow.querySelector('.settings-panel');
+    const overlay = this.shadow.querySelector('.settings-overlay');
+    if (panel && overlay) {
+      panel.classList.remove('settings-panel--open');
+      overlay.classList.remove('settings-overlay--open');
       this.isOpen = false;
     }
   }
 
-  /**
-   * Toggle Panel
-   */
   toggle(): void {
-    if (this.isOpen) {
-      this.close();
-    } else {
-      this.open();
-    }
+    this.isOpen ? this.close() : this.open();
   }
 
-  /**
-   * Zerstören und cleanup
-   */
-  destroy(): void {
-    if (this.container && this.container.parentNode) {
-      this.container.parentNode.removeChild(this.container);
+  static initialize(): SettingsUI {
+    let settings = document.querySelector('urlverse-settings') as SettingsUI;
+    if (!settings) {
+      settings = document.createElement('urlverse-settings') as SettingsUI;
+      document.body.appendChild(settings);
     }
-    this.container = null;
+    return settings;
   }
+
+  // Backwards compatibility method
+  create(): SettingsUI {
+    return SettingsUI.initialize();
+  }
+
+  destroy(): void {
+    this.remove();
+  }
+}
+
+// Register Custom Element
+if (!customElements.get('urlverse-settings')) {
+  customElements.define('urlverse-settings', SettingsUI);
 }

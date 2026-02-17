@@ -21,25 +21,20 @@ domReady(() => {
 
   // Settings UI Setup
   const settingsManager = SettingsManager.getInstance();
-  const settingsUI = new SettingsUI();
-  let settingsPanel: HTMLElement | null = null;
 
   // Settings Button Handler
   const settingsButton = document.querySelector('#openSettingsFromHome');
   if (settingsButton) {
     settingsButton.addEventListener('click', () => {
-      if (!settingsPanel) {
-        settingsPanel = settingsUI.create();
-        document.body.appendChild(settingsPanel);
-      }
-      settingsUI.open();
+      const settings = SettingsUI.initialize();
+      settings.open();
     });
 
     // Update button text based on API key status
     const updateSettingsButton = () => {
       const hasApiKey = settingsManager.hasValidApiKey();
       const button = settingsButton as HTMLElement;
-      
+
       if (hasApiKey) {
         button.textContent = '⚙️ Einstellungen';
         button.classList.remove('homepage__settings-link--warning');
@@ -58,9 +53,6 @@ domReady(() => {
 
   window.addEventListener('beforeunload', () => {
     urlInputHandler.destroy();
-    if (settingsPanel) {
-      settingsUI.destroy();
-    }
   });
 
   console.log('Homepage initialized successfully');

@@ -1,5 +1,7 @@
 ﻿---
 import Layout from "../components/Layout.astro";
+import ApiKeyError from "../components/ApiKeyError.astro";
+import GenerationError from "../components/GenerationError.astro";
 import { PageGeneratorService } from "../services/page-generator";
 import { FlavorService } from "../services/flavor-service";
 import { parseSlugData } from "../utils/slug-parser";
@@ -8,74 +10,57 @@ import { config, validateApiKey } from "../lib/config";
 export const prerender = false;
 
 const slugData = parseSlugData(Astro.params, Astro.url);
-const currentFlavorId = FlavorService.getCurrentFlavorFromRequest(Astro.request);
+const currentFlavorId = FlavorService.getCurrentFlavorFromRequest(
+  Astro.request,
+);
 
 // API Key Validation
 const apiKeyValidation = validateApiKey(Astro.request);
 
-let result;
+// Typ-Definition für das interne Result
+// Typ-Definition für das interne Result
+type PageLocalResult =
+  | { component: true; error: string; content?: undefined; flavorId?: string }
+  | { component?: false; content: string; error?: string; flavorId?: string };
+
+let result: PageLocalResult;
 let title = slugData.query || config.app.defaultTitle;
 
 if (!apiKeyValidation.isValid) {
   // Zeige Fehlermeldung wenn kein API Key vorhanden
+  // Nutze die Component für die Fehlermeldung
   result = {
-    content: `
-      <div style="padding: 2rem; font-family: Arial, sans-serif; max-width: 600px; margin: 2rem auto; text-align: center;">
-        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 2rem; margin-bottom: 2rem;">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">🔑</div>
-          <h1 style="color: #856404; margin: 0 0 1rem 0;">API Key erforderlich</h1>
-          <p style="color: #856404; margin: 0 0 1.5rem 0;">
-            ${apiKeyValidation.error}
-          </p>
-          <p style="color: #666; font-size: 0.9rem; margin-bottom: 2rem;">
-            Setzen Sie Ihren persönlichen Gemini API Key in den Einstellungen, um generierte Inhalte zu sehen.
-          </p>
-          
-          <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-            <a href="/" style="
-              display: inline-block;
-              padding: 0.75rem 1.5rem;
-              background: #667eea;
-              color: white;
-              text-decoration: none;
-              border-radius: 6px;
-              font-weight: 500;
-              transition: background 0.2s ease;
-            ">
-              🏠 Zur Startseite
-            </a>
-          </div>
-        </div>
-        
-        <details style="text-align: left; background: #f8f9fa; border-radius: 8px; padding: 1rem;">
-          <summary style="cursor: pointer; font-weight: 600; color: #667eea; margin-bottom: 1rem;">
-            Wie bekomme ich einen API Key?
-          </summary>
-          <ol style="margin: 0; padding-left: 1.5rem; color: #666; line-height: 1.6;">
-            <li>Gehen Sie zu <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #667eea;">Google AI Studio</a></li>
-            <li>Melden Sie sich mit Ihrem Google-Konto an</li>
-            <li>Klicken Sie auf "Create API Key"</li>
-            <li>Kopieren Sie den generierten Key</li>
-            <li>Öffnen Sie das Menü (☰) und gehen Sie zu den Einstellungen</li>
-            <li>Fügen Sie Ihren API Key ein und speichern Sie ihn</li>
-          </ol>
-        </details>
-      </div>
-    `,
-    error: apiKeyValidation.error
+    component: true,
+    error: apiKeyValidation.error || "Unbekannter Fehler",
   };
   title = config.app.errorTitle;
 } else {
   // Normale Seitengenerierung mit gültigem API Key
-  const pageGenerator = new PageGeneratorService(apiKeyValidation.apiKey, Astro.request);
-  result = await pageGenerator.generatePage(slugData, currentFlavorId);
-  
+  const pageGenerator = new PageGeneratorService(
+    apiKeyValidation.apiKey,
+    Astro.request,
+  );
+  const genResult = await pageGenerator.generatePage(slugData, currentFlavorId);
+  result = {
+    component: false,
+    content: genResult.content,
+    error: genResult.error,
+    flavorId: currentFlavorId,
+  };
+
   if (result.error) {
     title = config.app.errorTitle;
   }
 }
 
-const content = result.content || "Fehler beim Laden der Seite";
+const content = result.content;
 ---
 
-<Layout title={title} content={content} />
+<Layout title={title} content={content}>
+  {result.component && <ApiKeyError error={result.error} />}
+  {
+    !result.component && result.error && (
+      <GenerationError error={result.error} flavorId={result.flavorId} />
+    )
+  }
+</Layout>

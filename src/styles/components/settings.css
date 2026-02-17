@@ -1,395 +1,376 @@
-/**
- * Settings Panel Styles
- * CSS für das Einstellungen-Interface
- */
-
 /* Settings Panel */
 .settings-panel {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.9);
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  z-index: 1003;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  overflow: hidden;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    z-index: 1003;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    /* Reset text alignment and color */
+    text-align: left;
+    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .settings-panel--open {
-  opacity: 1;
-  visibility: visible;
-  transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
 }
 
 /* Header */
 .settings-panel__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
 }
 
 .settings-panel__header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
 }
 
 .settings-panel__close {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: background 0.2s ease;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .settings-panel__close:hover {
-  background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Content */
 .settings-panel__content {
-  padding: 0;
-  max-height: calc(80vh - 100px);
-  overflow-y: auto;
+    padding: 0;
+    max-height: calc(80vh - 100px);
+    overflow-y: auto;
 }
 
 /* Settings Sections */
 .settings-section {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e1e5e9;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e1e5e9;
 }
 
 .settings-section:last-child {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 .settings-section h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333;
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
 }
 
 .settings-description {
-  margin: 0 0 1rem 0;
-  color: #666;
-  font-size: 0.9rem;
-  line-height: 1.5;
+    margin: 0 0 1rem 0;
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 /* Form Elements */
 .settings-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .settings-field-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .settings-input {
-  padding: 0.75rem;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  font-family: 'Courier New', monospace;
+    padding: 0.75rem;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    font-family: 'Courier New', monospace;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .settings-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .settings-select {
-  padding: 0.75rem;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  background: white;
-  transition: all 0.2s ease;
-  cursor: pointer;
+    padding: 0.75rem;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: white;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .settings-select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 /* Radio Groups */
 .settings-radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .settings-radio {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .settings-radio:hover {
-  background: #f8f9fa;
-  border-color: #adb5bd;
+    background: #f8f9fa;
+    border-color: #adb5bd;
 }
 
 .settings-radio input[type="radio"] {
-  margin: 0;
-  accent-color: #667eea;
+    margin: 0;
+    accent-color: #667eea;
 }
 
-.settings-radio input[type="radio"]:checked + span {
-  font-weight: 600;
-  color: #667eea;
+.settings-radio input[type="radio"]:checked+span {
+    font-weight: 600;
+    color: #667eea;
 }
 
 /* Buttons */
 .btn {
-  padding: 0.75rem 1.25rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-width: 100px;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 100px;
 }
 
 .btn--primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
 }
 
 .btn--primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .btn--secondary {
-  background: #f8f9fa;
-  color: #333;
-  border: 1px solid #e1e5e9;
+    background: #f8f9fa;
+    color: #333;
+    border: 1px solid #e1e5e9;
 }
 
 .btn--secondary:hover {
-  background: #e9ecef;
-  border-color: #adb5bd;
-  transform: translateY(-1px);
+    background: #e9ecef;
+    border-color: #adb5bd;
+    transform: translateY(-1px);
 }
 
 /* Status Messages */
 .settings-status {
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-top: 0.5rem;
-  transition: all 0.3s ease;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+    transition: all 0.3s ease;
 }
 
 .settings-status--success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
 }
 
 .settings-status--error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
 
 .settings-status--warning {
-  background: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeaa7;
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
 }
 
 /* Help Sections */
 .settings-help {
-  margin-top: 1rem;
+    margin-top: 1rem;
 }
 
 .settings-help summary {
-  cursor: pointer;
-  color: #667eea;
-  font-size: 0.9rem;
-  font-weight: 500;
+    cursor: pointer;
+    color: #667eea;
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 
 .settings-help summary:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 .settings-help p {
-  margin: 0.75rem 0 0 0;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  line-height: 1.6;
+    margin: 0.75rem 0 0 0;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.6;
 }
 
 .settings-help a {
-  color: #667eea;
-  text-decoration: none;
+    color: #667eea;
+    text-decoration: none;
 }
 
 .settings-help a:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-  .settings-panel {
-    width: 95%;
-    max-height: 90vh;
-    margin: 1rem;
-  }
-  
-  .settings-panel__header,
-  .settings-section {
-    padding: 1rem;
-  }
-  
-  .settings-field-actions {
-    flex-direction: column;
-  }
-  
-  .btn {
-    width: 100%;
-  }
+    .settings-panel {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .settings-panel__header,
+    .settings-section {
+        padding: 1rem;
+    }
+
+    .settings-field-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
 }
 
 /* Dark Theme Support */
 @media (prefers-color-scheme: dark) {
-  .settings-panel {
-    background: #1a1a1a;
-    color: #fff;
-  }
-  
-  .settings-section {
-    border-bottom-color: #333;
-  }
-  
-  .settings-section h4 {
-    color: #fff;
-  }
-  
-  .settings-description {
-    color: #aaa;
-  }
-  
-  .settings-input,
-  .settings-select {
-    background: #2d2d2d;
-    border-color: #444;
-    color: #fff;
-  }
-  
-  .settings-input:focus,
-  .settings-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-  }
-  
-  .settings-radio {
-    border-color: #444;
-    background: #2d2d2d;
-  }
-  
-  .settings-radio:hover {
-    background: #3d3d3d;
-    border-color: #555;
-  }
-  
-  .btn--secondary {
-    background: #2d2d2d;
-    color: #fff;
-    border-color: #444;
-  }
-  
-  .btn--secondary:hover {
-    background: #3d3d3d;
-    border-color: #555;
-  }
-  
-  .settings-help p {
-    background: #2d2d2d;
-    color: #fff;
-  }
+    .settings-panel {
+        background: #1a1a1a;
+        color: #fff;
+    }
+
+    .settings-section {
+        border-bottom-color: #333;
+    }
+
+    .settings-section h4 {
+        color: #fff;
+    }
+
+    .settings-description {
+        color: #aaa;
+    }
+
+    .settings-input,
+    .settings-select {
+        background: #2d2d2d;
+        border-color: #444;
+        color: #fff;
+    }
+
+    .settings-input:focus,
+    .settings-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    }
+
+    .settings-radio {
+        border-color: #444;
+        background: #2d2d2d;
+    }
+
+    .settings-radio:hover {
+        background: #3d3d3d;
+        border-color: #555;
+    }
+
+    .btn--secondary {
+        background: #2d2d2d;
+        color: #fff;
+        border-color: #444;
+    }
+
+    .btn--secondary:hover {
+        background: #3d3d3d;
+        border-color: #555;
+    }
+
+    .settings-help p {
+        background: #2d2d2d;
+        color: #fff;
+    }
 }
 
-/* Accessibility */
-.settings-panel:focus-within {
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(102, 126, 234, 0.3);
+/* Simple Background Overlay to block clicks */
+.settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1002;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .settings-panel,
-  .settings-input,
-  .settings-select,
-  .settings-radio,
-  .btn,
-  .settings-status {
-    transition: none;
-  }
-}
-
-/* High contrast mode */
-@media (prefers-contrast: high) {
-  .settings-panel {
-    border: 2px solid #000;
-  }
-  
-  .settings-input,
-  .settings-select,
-  .settings-radio,
-  .btn {
-    border: 2px solid #000;
-  }
-  
-  .btn--primary {
-    background: #000;
-    color: #fff;
-  }
-  
-  .btn--secondary {
-    background: #fff;
-    color: #000;
-  }
+.settings-overlay--open {
+    opacity: 1;
+    visibility: visible;
 }

@@ -1,0 +1,170 @@
+---
+interface Props {
+    error: string;
+    flavorId?: string;
+}
+
+const { error, flavorId } = Astro.props;
+
+// Determine style based on flavor
+const isCyberpunk = flavorId === "cyberpunk";
+const isRetro = flavorId === "retro";
+---
+
+{
+    isCyberpunk ? (
+        <div class="error-container cyberpunk">
+            <div class="cyberpunk-box">
+                <h1 class="glitch-text" data-text="SYSTEM ERROR">
+                    SYSTEM ERROR
+                </h1>
+                <p class="status-text">NEURAL LINK DISCONNECTED:</p>
+                <code class="error-code">{error}</code>
+                <p class="action-text">
+                    <a href="/" class="cyberpunk-link">
+                        ← RETURN TO MAINFRAME
+                    </a>
+                </p>
+            </div>
+        </div>
+    ) : isRetro ? (
+        <div class="error-container retro">
+            <div class="retro-box">
+                <table style="border: 1px solid black; border-collapse: collapse; width: 80%; margin: 0 auto;">
+                    <tr style="background-color: #ff0000;">
+                        <td style="text-align: center; padding: 10px; border: 1px solid black;">
+                            <span style="font-size: 1.5rem; color: #ffffff;">
+                                <b>ERROR 404 - SITE NOT FOUND!</b>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid black;">
+                            <span style="font-size: 1rem; color: #000000;">
+                                <>
+                                    <b>Oops! Something went wrong:</b>
+                                    <br />
+                                    <br />
+                                </>
+                                <>
+                                    <code>{error}</code>
+                                    <br />
+                                    <br />
+                                </>
+                                <a href="/">Back to Homepage</a>
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    ) : (
+        <div class="error-container default">
+            <h1 class="error-title">Fehler beim Laden der Seite</h1>
+            <p class="error-text">Es ist ein Fehler aufgetreten:</p>
+            <code class="error-code">{error}</code>
+            <p class="action-text">
+                <a href="/" class="default-link">
+                    ← Zurück zur Startseite
+                </a>
+            </p>
+        </div>
+    )
+}
+
+<style>
+    /* Base Styles */
+    .error-container {
+        padding: 2rem;
+        font-family: Arial, sans-serif;
+        min-height: 100vh;
+        box-sizing: border-box;
+    }
+
+    .error-code {
+        display: block;
+        padding: 1rem;
+        border-radius: 4px;
+        margin: 1rem 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    /* Default Theme */
+    .default {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .default .error-title {
+        color: #e74c3c;
+    }
+
+    .default .error-code {
+        background: #f8f9fa;
+        color: #e74c3c;
+    }
+
+    .default-link {
+        color: #3498db;
+        text-decoration: none;
+    }
+
+    /* Cyberpunk Theme */
+    .cyberpunk {
+        background: #0a0a0a;
+        color: #00ff41;
+        font-family: "Courier New", monospace;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .cyberpunk-box {
+        max-width: 600px;
+        width: 100%;
+        border: 1px solid #00ff41;
+        padding: 2rem;
+        background: rgba(0, 0, 0, 0.9);
+        box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+    }
+
+    .glitch-text {
+        color: #ff0080;
+        text-shadow:
+            2px 2px 0px #00ff41,
+            -2px -2px 0px #00ffff;
+        margin-bottom: 2rem;
+    }
+
+    .cyberpunk .error-code {
+        background: #1a1a1a;
+        border: 1px solid #00ff41;
+        color: #ff0080;
+    }
+
+    .cyberpunk-link {
+        color: #00ff41;
+        text-decoration: none;
+        text-shadow: 0 0 5px #00ff41;
+        text-transform: uppercase;
+    }
+
+    .cyberpunk-link:hover {
+        background: #00ff41;
+        color: #000;
+    }
+
+    /* Retro Theme */
+    .retro {
+        background: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .retro-box {
+        width: 100%;
+        max-width: 800px;
+    }
+</style>
