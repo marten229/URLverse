@@ -1,6 +1,8 @@
 /**
- * Homepage Script
- * Client-side Logik für die Startseite
+ * Homepage initialisation script.
+ *
+ * Wires up the URL input field, the settings button, and the settings-change
+ * listener that keeps the button label in sync with the API key status.
  */
 
 import { domReady } from './dom-utils';
@@ -19,10 +21,8 @@ domReady(() => {
     }
   });
 
-  // Settings UI Setup
   const settingsManager = SettingsManager.getInstance();
 
-  // Settings Button Handler
   const settingsButton = document.querySelector('#openSettingsFromHome');
   if (settingsButton) {
     settingsButton.addEventListener('click', () => {
@@ -30,7 +30,11 @@ domReady(() => {
       settings.open();
     });
 
-    // Update button text based on API key status
+    /**
+     * Updates the settings button label to reflect whether an API key is
+     * configured. This gives first-time visitors a clear call-to-action
+     * without requiring them to discover the settings panel on their own.
+     */
     const updateSettingsButton = () => {
       const hasApiKey = settingsManager.hasValidApiKey();
       const button = settingsButton as HTMLElement;
@@ -44,10 +48,10 @@ domReady(() => {
       }
     };
 
-    // Initial update
     updateSettingsButton();
 
-    // Listen for settings changes
+    // Keep the button label in sync whenever the API key changes (e.g. after
+    // the user saves or clears the key in the settings panel).
     settingsManager.addListener(updateSettingsButton);
   }
 

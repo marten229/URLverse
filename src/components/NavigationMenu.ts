@@ -1,6 +1,10 @@
 /**
- * Navigation Menu Component
- * Web Component implementation with Shadow DOM for style isolation
+ * Navigation Menu Web Component.
+ *
+ * Implemented as a Custom Element with Shadow DOM to ensure complete style
+ * isolation from AI-generated page content. Without Shadow DOM, the
+ * dynamically injected page CSS would frequently override the navigation
+ * styles, breaking the UI on generated pages.
  */
 
 import { SettingsUI } from './SettingsUI';
@@ -24,25 +28,28 @@ export class NavigationMenu extends HTMLElement {
     this.render();
     this.attachEventListeners();
 
-    // Listen for settings changes to update UI
+    // Keep the API key status indicator in sync whenever settings change
+    // without re-rendering the entire component.
     this.settingsManager.addListener(() => {
       this.updateStatusIndicator();
     });
   }
 
   disconnectedCallback() {
-    // Cleanup if needed
+    // NOTE: Listener cleanup would go here if SettingsManager exposed a
+    // removeListener API keyed by the bound function reference.
   }
 
   /**
-   * Initializes and renders the component
+   * Performs the initial full render of the component into the Shadow DOM.
+   * Subsequent updates use targeted DOM mutations (e.g. `updateStatusIndicator`)
+   * to avoid the cost of a full re-render.
    */
   private render(): void {
     const flavors = getAllFlavors();
     const currentPath = window.location.pathname;
     const settings = this.settingsManager.getSettings();
 
-    // Injects styles and HTML structure
     this.shadow.innerHTML = `
       <style>${navigationStyles}</style>
       <div class="nav-menu">
@@ -54,7 +61,10 @@ export class NavigationMenu extends HTMLElement {
     `;
   }
 
-  // --- HTML Templates ---
+  // --- HTML template builders ---
+  // Each method returns a self-contained HTML string for a section of the UI.
+  // This decomposition makes it easy to update individual sections without
+  // touching the full render method.
 
   private getTouchAreaHTML(): string {
     return '<div class="nav-menu__touch-area"></div>';
@@ -198,10 +208,11 @@ export class NavigationMenu extends HTMLElement {
     `;
   }
 
-  // --- Event Handling ---
+  // --- Event handling ---
 
   private attachEventListeners(): void {
-    // Note: We search within this.shadow, not the document
+    // All queries are scoped to `this.shadow` to avoid leaking into the main
+    // document, which is critical for Shadow DOM encapsulation.
     const container = this.shadow.querySelector('.nav-menu');
     if (!container) return;
 
@@ -219,7 +230,6 @@ export class NavigationMenu extends HTMLElement {
       this.openSettings();
     });
 
-    // Flavor Buttons - using delegation or direct attachment
     const flavorButtons = this.shadow.querySelectorAll('.nav-menu__flavor-btn');
     flavorButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -228,12 +238,12 @@ export class NavigationMenu extends HTMLElement {
       });
     });
 
-    // Quick Actions
     this.shadow.querySelector('#randomPage')?.addEventListener('click', () => this.generateRandomPage());
     this.shadow.querySelector('#shareUrl')?.addEventListener('click', () => this.shareCurrentUrl());
     this.shadow.querySelector('#reloadWithFlavor')?.addEventListener('click', () => this.reloadWithCurrentFlavor());
 
-    // Keyboard Navigation (Global listener is needed for Escape key)
+    // The Escape key listener must be on `document` (not the shadow root)
+    // because keyboard events do not bubble out of Shadow DOM in all browsers.
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.isOpen) {
         this.close();
@@ -241,7 +251,7 @@ export class NavigationMenu extends HTMLElement {
     });
   }
 
-  // --- Public Methods ---
+  // --- Public API ---
 
   open(): void {
     const container = this.shadow.querySelector('.nav-menu');
@@ -249,6 +259,7 @@ export class NavigationMenu extends HTMLElement {
       container.classList.add('nav-menu--open');
       this.isOpen = true;
       this.shadow.querySelector('.nav-menu__toggle')?.setAttribute('aria-expanded', 'true');
+      // Move focus into the panel for keyboard accessibility.
       (this.shadow.querySelector('.nav-menu__close') as HTMLElement)?.focus();
     }
   }
@@ -272,7 +283,7 @@ export class NavigationMenu extends HTMLElement {
     this.close();
   }
 
-  // --- Logic Methods (Preserved) ---
+  // --- Private action handlers ---
 
   private changeFlavor(flavorId: string): void {
     this.settingsManager.setDefaultFlavor(flavorId as any);
@@ -304,6 +315,7 @@ export class NavigationMenu extends HTMLElement {
     const url = window.location.href;
     const title = document.title || 'URLverse - Generierte Seite';
     try {
+      // Prefer the native share sheet on mobile devices for a better UX.
       if (navigator.share && /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         await navigator.share({ title, url });
         this.showNotification('URL geteilt!', 'success');
@@ -311,7 +323,8 @@ export class NavigationMenu extends HTMLElement {
         await this.copyUrlToClipboard(url);
       }
     } catch (error) {
-      // Ignore abort errors
+      // AbortError is thrown when the user cancels the native share sheet —
+      // this is expected behaviour and should not be treated as an error.
       if (error instanceof Error && error.name !== 'AbortError') {
         console.error('Share error:', error);
         await this.copyUrlToClipboard(url);
@@ -333,10 +346,20 @@ export class NavigationMenu extends HTMLElement {
     }
   }
 
+  /**
+   * Clipboard fallback for non-secure contexts (HTTP) or browsers that do not
+   * support the modern `navigator.clipboard` API.
+   *
+   * HACK: `document.execCommand('copy')` is deprecated but remains the only
+   * reliable clipboard mechanism in older browsers and non-HTTPS environments.
+   *
+   * @param url - The URL string to copy to the clipboard.
+   */
   private fallbackCopyToClipboard(url: string): void {
     const textArea = document.createElement('textarea');
     textArea.value = url;
-    textArea.style.position = 'fixed'; // Avoid scrolling to bottom
+    // Position off-screen to prevent the page from scrolling to the element.
+    textArea.style.position = 'fixed';
     textArea.style.opacity = '0';
     document.body.appendChild(textArea);
     textArea.focus();
@@ -355,10 +378,16 @@ export class NavigationMenu extends HTMLElement {
     const settings = this.settingsManager.getSettings();
     const url = new URL(window.location.href);
     url.searchParams.set('flavor', settings.defaultFlavor);
+    // The `refresh` timestamp forces a new AI generation even if the URL path
+    // has not changed, bypassing any browser or CDN caching.
     url.searchParams.set('refresh', Date.now().toString());
     window.location.href = url.toString();
   }
 
+  /**
+   * Surgically updates the API key status indicator without re-rendering the
+   * entire component, which would reset scroll position and lose focus state.
+   */
   private updateStatusIndicator(): void {
     const container = this.shadow.querySelector('.nav-menu');
     if (!container) return;
@@ -371,14 +400,23 @@ export class NavigationMenu extends HTMLElement {
     }
   }
 
+  /**
+   * Displays a transient notification toast inside the Shadow DOM.
+   *
+   * Appending the notification to the Shadow DOM rather than the main document
+   * ensures it inherits the component's isolated styles and z-index context.
+   *
+   * @param message - The notification text to display.
+   * @param type    - The severity level, which maps to a CSS modifier class.
+   */
   private showNotification(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info'): void {
     const notification = document.createElement('div');
     notification.className = `nav-menu__notification nav-menu__notification--${type}`;
     notification.textContent = message;
 
-    // Notifications are appended to Shadow DOM to benefit from isolated styles
     this.shadow.appendChild(notification);
 
+    // Defer adding the show class by one frame to trigger the CSS transition.
     requestAnimationFrame(() => {
       notification.classList.add('nav-menu__notification--show');
     });
@@ -401,15 +439,17 @@ export class NavigationMenu extends HTMLElement {
   }
 
   /**
-   * Static Factory Method for compatibility
+   * Ensures the custom element is registered and a single instance exists in
+   * the DOM, creating one if necessary.
+   *
+   * @param _config - Reserved for future configuration options.
+   * @returns The existing or newly created `NavigationMenu` element.
    */
   static initialize(_config: NavigationConfig = {}): NavigationMenu {
-    // Check if already defined
     if (!customElements.get('urlverse-nav')) {
       customElements.define('urlverse-nav', NavigationMenu);
     }
 
-    // Check if already exists in DOM
     let menu = document.querySelector('urlverse-nav') as NavigationMenu;
     if (!menu) {
       menu = document.createElement('urlverse-nav') as NavigationMenu;

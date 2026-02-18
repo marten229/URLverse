@@ -1,5 +1,10 @@
 /**
- * Definition verschiedener Prompt-Flavors für unterschiedliche Stile
+ * Definitions for all available prompt flavors.
+ *
+ * Each flavor encapsulates a complete set of AI instructions that determine
+ * the visual style, tone, and thematic context of generated pages. Adding a
+ * new flavor here automatically makes it available throughout the application
+ * without requiring changes to any other module.
  */
 
 export interface PromptFlavor {
@@ -12,7 +17,10 @@ export interface PromptFlavor {
 }
 
 /**
- * Sammlung aller verfügbaren Prompt-Flavors
+ * Registry of all available prompt flavors, keyed by their stable ID.
+ *
+ * NOTE: The base prompts are intentionally written in German to match the
+ * target audience and to produce German-language content by default.
  */
 export const PROMPT_FLAVORS: Record<string, PromptFlavor> = {
   parallelverse: {
@@ -220,26 +228,38 @@ Zusatzregeln:
 };
 
 /**
- * Standard-Flavor falls keiner spezifiziert wird
+ * The flavor used when no explicit flavor is specified by the user or URL
+ * parameters. `parallelverse` is the default because it produces the most
+ * distinctive and memorable content for first-time visitors.
  */
 export const DEFAULT_FLAVOR_ID = 'parallelverse';
 
 /**
- * Holt einen Flavor nach ID
+ * Looks up a flavor by its ID, falling back to the default flavor if the
+ * requested ID is not registered. This prevents runtime errors from typos
+ * or stale flavor IDs stored in user cookies.
+ *
+ * @param id - The flavor identifier to look up.
+ * @returns The matching `PromptFlavor`, or the default flavor as a fallback.
  */
 export function getFlavorById(id: string): PromptFlavor {
   return PROMPT_FLAVORS[id] || PROMPT_FLAVORS[DEFAULT_FLAVOR_ID];
 }
 
 /**
- * Gibt alle verfügbaren Flavors zurück
+ * Returns all registered flavors as an ordered array.
+ *
+ * @returns An array of all `PromptFlavor` objects in registration order.
  */
 export function getAllFlavors(): PromptFlavor[] {
   return Object.values(PROMPT_FLAVORS);
 }
 
 /**
- * Erstellt eine Liste der Flavor-Namen für UI-Zwecke
+ * Returns a lightweight projection of all flavors suitable for populating
+ * UI select/radio controls without exposing the full prompt strings.
+ *
+ * @returns An array of objects containing only `id`, `name`, and `description`.
  */
 export function getFlavorOptions(): Array<{ id: string; name: string; description: string }> {
   return getAllFlavors().map(flavor => ({

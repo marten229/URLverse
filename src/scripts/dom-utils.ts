@@ -1,10 +1,17 @@
 /**
- * DOM Utilities
- * Hilfsfunktionen für DOM-Manipulation
+ * Lightweight DOM utility functions.
+ *
+ * These helpers provide type-safe wrappers around common browser APIs and
+ * higher-level abstractions (debounce, throttle, EventManager) that reduce
+ * boilerplate in component code.
  */
 
 /**
- * Wartet bis das DOM vollständig geladen ist
+ * Executes `callback` as soon as the DOM is ready, or immediately if it
+ * already is. Avoids the common pitfall of querying elements before the
+ * parser has finished building the document tree.
+ *
+ * @param callback - Function to invoke when the DOM is interactive.
  */
 export function domReady(callback: () => void): void {
   if (document.readyState === 'loading') {
@@ -15,7 +22,12 @@ export function domReady(callback: () => void): void {
 }
 
 /**
- * Element-Selektor mit Typsicherheit
+ * Type-safe wrapper around `querySelector` that returns the element cast to
+ * the requested type, or `null` if no match is found.
+ *
+ * @param selector - A valid CSS selector string.
+ * @param context  - The root element to search within (defaults to `document`).
+ * @returns The first matching element typed as `T`, or `null`.
  */
 export function querySelector<T extends HTMLElement>(
   selector: string,
@@ -25,7 +37,11 @@ export function querySelector<T extends HTMLElement>(
 }
 
 /**
- * Mehrere Elemente selektieren
+ * Type-safe wrapper around `querySelectorAll`.
+ *
+ * @param selector - A valid CSS selector string.
+ * @param context  - The root element to search within (defaults to `document`).
+ * @returns A `NodeList` of all matching elements typed as `T`.
  */
 export function querySelectorAll<T extends HTMLElement>(
   selector: string,
@@ -35,7 +51,12 @@ export function querySelectorAll<T extends HTMLElement>(
 }
 
 /**
- * Element erstellen mit Attributen und Inhalt
+ * Creates a DOM element and applies a set of properties in a single call,
+ * reducing the verbosity of imperative element construction.
+ *
+ * @param tagName - The HTML tag name for the new element.
+ * @param options - Optional properties to apply to the element.
+ * @returns The newly created element.
  */
 export function createElement<K extends keyof HTMLElementTagNameMap>(
   tagName: K,
@@ -82,7 +103,12 @@ export function createElement<K extends keyof HTMLElementTagNameMap>(
 }
 
 /**
- * CSS-Klassen hinzufügen/entfernen
+ * Toggles a CSS class on an element, with an optional `force` parameter to
+ * explicitly add or remove it.
+ *
+ * @param element   - The target element.
+ * @param className - The CSS class to toggle.
+ * @param force     - If `true`, adds the class; if `false`, removes it.
  */
 export function toggleClass(element: HTMLElement, className: string, force?: boolean): void {
   element.classList.toggle(className, force);
@@ -101,7 +127,9 @@ export function hasClass(element: HTMLElement, className: string): boolean {
 }
 
 /**
- * Event Listener mit automatischer Cleanup
+ * Tracks event listeners and provides a single `removeAll` call to clean them
+ * up, preventing memory leaks in components that are frequently created and
+ * destroyed.
  */
 export class EventManager {
   private listeners: Array<{
@@ -149,7 +177,14 @@ export class EventManager {
 }
 
 /**
- * Debounce Funktion für Performance
+ * Returns a debounced version of `func` that delays invocation until `wait`
+ * milliseconds have elapsed since the last call. Prevents expensive operations
+ * (e.g. API calls, layout recalculations) from running on every keystroke or
+ * scroll event.
+ *
+ * @param func - The function to debounce.
+ * @param wait - Delay in milliseconds.
+ * @returns A debounced wrapper function.
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
@@ -164,7 +199,13 @@ export function debounce<T extends (...args: any[]) => any>(
 }
 
 /**
- * Throttle Funktion für Performance
+ * Returns a throttled version of `func` that invokes it at most once per
+ * `limit` milliseconds. Unlike debounce, the first call executes immediately,
+ * making throttle better suited for continuous events like scroll or mousemove.
+ *
+ * @param func  - The function to throttle.
+ * @param limit - Minimum interval between invocations in milliseconds.
+ * @returns A throttled wrapper function.
  */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
@@ -182,7 +223,14 @@ export function throttle<T extends (...args: any[]) => any>(
 }
 
 /**
- * Intersection Observer Wrapper
+ * Creates an `IntersectionObserver` for one or more elements and begins
+ * observing them immediately.
+ *
+ * @param elements  - A single element or array of elements to observe.
+ * @param callback  - Invoked when observed elements enter or leave the viewport.
+ * @param options   - Optional overrides for the default observer configuration.
+ * @returns The configured `IntersectionObserver` instance (call `.disconnect()`
+ *          to stop observing).
  */
 export function observeIntersection(
   elements: HTMLElement | HTMLElement[],
@@ -201,7 +249,10 @@ export function observeIntersection(
 }
 
 /**
- * Smooth Scroll zu Element
+ * Smoothly scrolls the given element into the visible viewport area.
+ *
+ * @param element - The element to scroll into view.
+ * @param options - Optional overrides for the default scroll behaviour.
  */
 export function scrollToElement(
   element: HTMLElement,
@@ -215,7 +266,11 @@ export function scrollToElement(
 }
 
 /**
- * Copy to Clipboard
+ * Copies text to the clipboard using the modern `navigator.clipboard` API.
+ *
+ * @param text - The string to copy.
+ * @returns `true` if the copy succeeded, `false` if it failed (e.g. due to
+ *          missing permissions or an insecure context).
  */
 export async function copyToClipboard(text: string): Promise<boolean> {
   try {

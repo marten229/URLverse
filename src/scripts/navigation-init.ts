@@ -1,6 +1,10 @@
 /**
- * Navigation Initializer
- * Lädt das Navigationsmenü automatisch auf generierten Seiten
+ * Navigation system initialiser for AI-generated pages.
+ *
+ * This module auto-initialises the navigation menu on all generated pages
+ * (i.e. any path that is not the homepage, flavor selector, or admin panel).
+ * It also registers keyboard shortcuts and shows a one-time API key warning
+ * to guide users who have not yet configured their key.
  */
 
 import { NavigationMenu } from '../components/NavigationMenu';
@@ -16,6 +20,11 @@ class NavigationInitializer {
     this.init();
   }
 
+  /**
+   * Returns the singleton `NavigationInitializer` instance, creating it on
+   * first access. The singleton pattern ensures the navigation menu and its
+   * keyboard shortcuts are registered exactly once per page load.
+   */
   static getInstance(): NavigationInitializer {
     if (!NavigationInitializer.instance) {
       NavigationInitializer.instance = new NavigationInitializer();
@@ -24,10 +33,10 @@ class NavigationInitializer {
   }
 
   /**
-   * Initialisiert das Navigation System
+   * Defers navigation setup until the DOM is ready to avoid querying elements
+   * before they exist in the document.
    */
   private init(): void {
-    // Warten bis DOM geladen ist
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.setupNavigation());
     } else {
@@ -36,12 +45,13 @@ class NavigationInitializer {
   }
 
   /**
-   * Setup Navigation basierend auf der aktuellen Seite
+   * Conditionally creates the navigation menu based on the current path.
+   * The menu is intentionally suppressed on the homepage and admin pages
+   * because those pages have their own dedicated navigation UI.
    */
   private setupNavigation(): void {
     const currentPath = window.location.pathname;
 
-    // Nur auf generierten Seiten (nicht Homepage oder Admin)
     if (this.shouldShowNavigation(currentPath)) {
       this.createNavigation();
       this.checkApiKeyStatus();
@@ -49,32 +59,38 @@ class NavigationInitializer {
   }
 
   /**
-   * Prüft ob Navigation auf dieser Seite gezeigt werden soll
+   * Determines whether the navigation menu should be shown on the given path.
+   * Excluded paths have their own navigation or do not benefit from the menu.
+   *
+   * @param path - The current `window.location.pathname`.
+   * @returns `true` if the navigation menu should be rendered.
    */
   private shouldShowNavigation(path: string): boolean {
-    // Navigation auf Homepage und Admin-Seite ausblenden
     const excludePaths = ['/', '/flavor', '/admin'];
     return !excludePaths.includes(path);
   }
 
   /**
-   * Erstellt das Navigationsmenü
+   * Creates and registers the navigation menu Web Component. Guards against
+   * double-initialisation in case this method is called more than once.
    */
   private createNavigation(): void {
     if (this.navigationMenu) {
-      return; // Bereits erstellt
+      return;
     }
 
     try {
       this.navigationMenu = NavigationMenu.initialize();
       this.addKeyboardShortcuts();
     } catch (error) {
-      console.error('Fehler beim Erstellen des Navigationsmenüs:', error);
+      console.error('Failed to create navigation menu:', error);
     }
   }
 
   /**
-   * Prüft API Key Status und zeigt Warnung bei Bedarf
+   * Shows a one-time API key warning banner if no valid key is configured.
+   * The warning is suppressed for the remainder of the session once dismissed
+   * to avoid repeatedly interrupting the user.
    */
   private checkApiKeyStatus(): void {
     const hasApiKey = this.settingsManager.hasValidApiKey();
@@ -85,10 +101,18 @@ class NavigationInitializer {
   }
 
   /**
-   * Zeigt eine Warnung wenn kein API Key gesetzt ist
+   * Renders a dismissible API key warning banner at the top of the page.
+   *
+   * The banner is injected into the main document (not the Shadow DOM) so
+   * that it appears above all other content. `sessionStorage` is used to
+   * track whether the warning has already been shown this session, preventing
+   * it from reappearing on every page navigation.
+   *
+   * NOTE: The banner auto-dismisses after 10 seconds to avoid permanently
+   * blocking content for users who choose to ignore it.
    */
   private showApiKeyWarning(): void {
-    // Nur anzeigen wenn noch nicht angezeigt wurde (Session Storage)
+    // Suppress the warning for the rest of the session once it has been shown.
     if (sessionStorage.getItem('apiKeyWarningShown')) {
       return;
     }
@@ -113,19 +137,20 @@ class NavigationInitializer {
       </div>
     `;
 
-    // Styling für die Warnung
+    // Inline styles are used here because the banner is injected into the
+    // main document where global CSS may not be available on generated pages.
     const style = document.createElement('style');
     style.textContent = `
       .api-key-warning {
         position: fixed;
-        top: 70px; /* Unter dem sichtbaren Notch */
+        top: 70px; /* Positioned below the navigation notch */
         left: 50%;
         transform: translateX(-50%);
         background: #fff3cd;
         border: 1px solid #ffeaa7;
         border-radius: 15px;
         padding: 1rem;
-        z-index: 998; /* Unter dem Notch aber über dem Rest */
+        z-index: 998; /* Below the nav notch but above page content */
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         max-width: 400px;
         width: 90%;
@@ -243,12 +268,12 @@ class NavigationInitializer {
     document.head.appendChild(style);
     document.body.appendChild(warning);
 
-    // Event Listeners
     const openSettingsBtn = warning.querySelector('#openSettingsFromWarning');
     const dismissBtn = warning.querySelector('#dismissWarning');
 
+    // Open the settings panel directly rather than routing through the nav menu
+    // to reduce the number of steps for the user.
     openSettingsBtn?.addEventListener('click', () => {
-      // Direkt die Einstellungen öffnen, ohne Umweg über das Menü
       this.navigationMenu?.openSettings();
       this.removeWarning(warning);
     });
@@ -257,7 +282,8 @@ class NavigationInitializer {
       this.removeWarning(warning);
     });
 
-    // Auto-dismiss nach 10 Sekunden
+    // Auto-dismiss after 10 seconds so the banner does not permanently obscure
+    // content for users who choose not to interact with it.
     setTimeout(() => {
       if (document.body.contains(warning)) {
         this.removeWarning(warning);
@@ -266,7 +292,11 @@ class NavigationInitializer {
   }
 
   /**
-   * Entfernt die API Key Warnung
+   * Animates the warning banner out and removes it from the DOM.
+   * Records the dismissal in `sessionStorage` to prevent the banner from
+   * reappearing during the same browser session.
+   *
+   * @param warning - The warning banner element to remove.
    */
   private removeWarning(warning: HTMLElement): void {
     warning.style.animation = 'slideUp 0.3s ease forwards';
@@ -280,11 +310,20 @@ class NavigationInitializer {
   }
 
   /**
-   * Fügt Keyboard Shortcuts hinzu
+   * Registers global keyboard shortcuts for power users.
+   *
+   * Shortcuts are intentionally suppressed when an input or textarea is
+   * focused to avoid interfering with text entry.
+   *
+   * Registered shortcuts:
+   * - `M` / `m`       — Toggle navigation menu
+   * - `Ctrl/Cmd + ,`  — Open settings panel
+   * - `H` / `h`       — Navigate to homepage
+   * - `Ctrl/Cmd + R`  — Reload with current flavor settings
    */
   private addKeyboardShortcuts(): void {
     document.addEventListener('keydown', (e) => {
-      // Nur wenn kein Input Element fokussiert ist
+      // Do not intercept shortcuts while the user is typing in a form field.
       if (document.activeElement?.tagName.toLowerCase() === 'input' ||
         document.activeElement?.tagName.toLowerCase() === 'textarea') {
         return;
@@ -322,19 +361,21 @@ class NavigationInitializer {
   }
 
   /**
-   * Öffnet Einstellungen direkt
+   * Opens the settings panel, creating the navigation menu first if it has
+   * not yet been initialised (e.g. when triggered via keyboard shortcut before
+   * the menu has been rendered).
    */
   private openSettingsDirectly(): void {
     if (!this.navigationMenu) {
       this.createNavigation();
     }
 
-    // Einstellungen direkt öffnen
     this.navigationMenu?.openSettings();
   }
 
   /**
-   * Lädt Seite mit aktuellen Einstellungen neu
+   * Reloads the current page with the active flavor and a cache-busting
+   * `refresh` timestamp to force a fresh AI generation.
    */
   private reloadWithCurrentSettings(): void {
     const settings = this.settingsManager.getSettings();
@@ -345,7 +386,7 @@ class NavigationInitializer {
   }
 
   /**
-   * Cleanup beim Verlassen der Seite
+   * Tears down the navigation menu and releases associated resources.
    */
   destroy(): void {
     if (this.navigationMenu) {
@@ -355,8 +396,9 @@ class NavigationInitializer {
   }
 }
 
-// Auto-initialize
+// Auto-initialise on module load so the navigation is available immediately
+// without requiring an explicit call from the page template.
 NavigationInitializer.getInstance();
 
-// Global Access für Debugging
+// Expose the class on `window` to allow debugging from the browser console.
 (window as any).NavigationInitializer = NavigationInitializer;

@@ -1,5 +1,12 @@
 import type { GeminiRequest, GeminiResponse, PageGenerationResult } from '../types';
 
+/**
+ * Thin wrapper around the Gemini REST API that handles request construction,
+ * error classification, and response extraction.
+ *
+ * The API key is passed via the `x-goog-api-key` header rather than as a URL
+ * query parameter to keep it out of server access logs.
+ */
 export class GeminiService {
   private apiKey: string;
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
@@ -12,7 +19,12 @@ export class GeminiService {
   }
 
   /**
-   * Statische Methode zum Erstellen einer GeminiService-Instanz mit API Key Validation
+   * Factory method that validates the API key before constructing an instance.
+   * Prefer this over the constructor to get a clear error when no key is available.
+   *
+   * @param apiKey - The Gemini API key, or `null` if none has been configured.
+   * @returns A ready-to-use `GeminiService` instance.
+   * @throws {Error} If `apiKey` is `null` or an empty string.
    */
   static create(apiKey: string | null): GeminiService {
     if (!apiKey) {
@@ -22,7 +34,15 @@ export class GeminiService {
   }
 
   /**
-   * Sendet einen Prompt an die Gemini API
+   * Sends a prompt to the Gemini API and returns the raw generated text.
+   *
+   * Error handling distinguishes between API key errors (which should surface
+   * to the user as a settings prompt) and other errors (which are logged and
+   * returned as generic failure messages).
+   *
+   * @param prompt - The complete prompt string to send to the model.
+   * @returns A result object containing the generated content, or an error
+   *          string if the request failed.
    */
   async generateContent(prompt: string): Promise<PageGenerationResult> {
     try {
@@ -51,7 +71,8 @@ export class GeminiService {
           if (errorBody.error) {
             errorMessage = errorBody.error.message || errorMessage;
 
-            // Prüfe auf spezifische API-Key Fehler anhand des reason-Felds
+            // Classify the error as an API key problem based on the structured
+            // `reason` field, which is more reliable than matching error messages.
             const details: Array<{ reason?: string }> = errorBody.error.details || [];
             const reason = details.find(d => d.reason)?.reason ?? '';
 
@@ -60,10 +81,10 @@ export class GeminiService {
             }
           }
         } catch (e) {
-          // Fallback wenn Body nicht geparst werden kann
+          // Body could not be parsed as JSON — fall back to the HTTP status message.
         }
 
-        // Spezifische HTTP Status Codes
+        // 401/403 are definitive API key rejections regardless of the response body.
         if (response.status === 401 || response.status === 403) {
           isApiKeyError = true;
           errorMessage = 'Ungültiger oder abgelaufener API Key.';
@@ -71,6 +92,8 @@ export class GeminiService {
           errorMessage = 'API Rate Limit erreicht. Bitte versuchen Sie es später erneut.';
         }
 
+        // Use a sentinel string so callers can distinguish key errors from
+        // other failures without parsing localised error messages.
         if (isApiKeyError) {
           throw new Error('INVALID_API_KEY');
         }
@@ -92,7 +115,8 @@ export class GeminiService {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
 
-      // Bekannte/erwartete Fehler nicht als Error loggen
+      // Known/expected errors (e.g. INVALID_API_KEY) are handled by the caller
+      // and should not pollute the error log.
       const knownErrors = ['INVALID_API_KEY'];
       if (!knownErrors.includes(errorMessage)) {
         console.error('Fehler beim Generieren des Inhalts:', error);

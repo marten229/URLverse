@@ -1,6 +1,6 @@
 /**
- * URL Input Handler
- * Behandelt die URL-Eingabe auf der Homepage
+ * Handles URL input on the homepage, normalising user-entered paths and
+ * triggering navigation on submission.
  */
 
 export interface URLInputOptions {
@@ -10,6 +10,13 @@ export interface URLInputOptions {
   onNavigate?: (url: string) => void;
 }
 
+/**
+ * Binds to a URL input element and manages the full input lifecycle:
+ * focus, normalisation, and navigation.
+ *
+ * An `onNavigate` callback can be provided to intercept navigation (e.g. for
+ * logging or analytics) before the browser performs the actual redirect.
+ */
 export class URLInputHandler {
   private input: HTMLInputElement | null = null;
   private options: URLInputOptions;
@@ -19,20 +26,20 @@ export class URLInputHandler {
       autoFocus: true,
       ...options
     };
-    
+
     this.init();
   }
 
   private init(): void {
     this.input = document.querySelector(this.options.inputSelector);
-    
+
     if (!this.input) {
       console.warn(`URLInputHandler: Element with selector "${this.options.inputSelector}" not found`);
       return;
     }
 
     this.setupEventListeners();
-    
+
     if (this.options.autoFocus) {
       this.focusInput();
     }
@@ -80,6 +87,16 @@ export class URLInputHandler {
     window.location.href = url;
   }
 
+  /**
+   * Normalises a user-entered URL string to a valid internal path.
+   *
+   * Users often omit the leading slash or enter duplicate slashes. This method
+   * ensures the resulting URL is always a clean, absolute-looking path before
+   * navigation is triggered.
+   *
+   * @param url - The raw string from the input field.
+   * @returns A normalised path string starting with `/`.
+   */
   private normalizeURL(url: string): string {
     url = url.trim();
 
@@ -87,11 +104,17 @@ export class URLInputHandler {
       url = '/' + url;
     }
 
+    // Collapse consecutive slashes (e.g. `//foo` → `/foo`).
     url = url.replace(/\/+/g, '/');
 
     return url;
   }
 
+  /**
+   * Defers focus by one tick to ensure the element is fully rendered before
+   * `focus()` is called, which can fail silently on elements that are not yet
+   * in the layout.
+   */
   private focusInput(): void {
     if (this.input) {
       setTimeout(() => {
@@ -100,9 +123,6 @@ export class URLInputHandler {
     }
   }
 
-  /**
-   * Öffentliche Methoden
-   */
   public focus(): void {
     this.focusInput();
   }
@@ -121,6 +141,10 @@ export class URLInputHandler {
     this.setValue('');
   }
 
+  /**
+   * Removes all event listeners attached by this handler. Call this when the
+   * input element is removed from the DOM to prevent memory leaks.
+   */
   public destroy(): void {
     if (this.input) {
       this.input.removeEventListener('keypress', this.handleKeyPress.bind(this));

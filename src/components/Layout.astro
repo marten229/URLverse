@@ -1,11 +1,10 @@
 ---
 export interface Props {
   title: string;
-  content?: string;
   className?: string;
 }
 
-const { title, content, className = "" } = Astro.props;
+const { title, className = "" } = Astro.props;
 
 import "../styles/main.css";
 ---
@@ -19,7 +18,7 @@ import "../styles/main.css";
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body class={className}>
-    {content ? <Fragment set:html={content} /> : <slot />}
+    <slot />
     <script type="module" src="/src/scripts/navigation-init.ts"></script>
   </body>
 </html>

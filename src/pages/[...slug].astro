@@ -1,11 +1,8 @@
 ﻿---
 import Layout from "../components/Layout.astro";
-import ApiKeyError from "../components/ApiKeyError.astro";
-import GenerationError from "../components/GenerationError.astro";
-import { PageGeneratorService } from "../services/page-generator";
 import { FlavorService } from "../services/flavor-service";
 import { parseSlugData } from "../utils/slug-parser";
-import { config, validateApiKey } from "../lib/config";
+import { config } from "../lib/config";
 
 export const prerender = false;
 
@@ -13,64 +10,320 @@ const slugData = parseSlugData(Astro.params, Astro.url);
 const currentFlavorId = FlavorService.getCurrentFlavorFromRequest(
   Astro.request,
 );
-
-// API Key Validation
-const apiKeyValidation = validateApiKey(Astro.request);
-
-// Typ-Definition für das interne Result
-// Typ-Definition für das interne Result
-type PageLocalResult =
-  | { component: true; error: string; content?: undefined; flavorId?: string }
-  | { component?: false; content: string; error?: string; flavorId?: string };
-
-let result: PageLocalResult;
-let title = slugData.query || config.app.defaultTitle;
-
-if (!apiKeyValidation.isValid) {
-  // Zeige Fehlermeldung wenn kein API Key vorhanden
-  // Nutze die Component für die Fehlermeldung
-  result = {
-    component: true,
-    error: apiKeyValidation.error || "Unbekannter Fehler",
-  };
-  title = config.app.errorTitle;
-} else {
-  // Normale Seitengenerierung mit gültigem API Key
-  const pageGenerator = new PageGeneratorService(
-    apiKeyValidation.apiKey,
-    Astro.request,
-  );
-  const genResult = await pageGenerator.generatePage(slugData, currentFlavorId);
-
-  if (genResult.error === "INVALID_API_KEY") {
-    result = {
-      component: true,
-      error: "Der verwendete API Key ist ungültig oder abgelaufen.",
-      flavorId: currentFlavorId,
-    };
-    title = config.app.errorTitle;
-  } else {
-    result = {
-      component: false,
-      content: genResult.content,
-      error: genResult.error,
-      flavorId: currentFlavorId,
-    };
-
-    if (result.error) {
-      title = config.app.errorTitle;
-    }
-  }
-}
-
-const content = result.content;
+const title = slugData.query || config.app.defaultTitle;
 ---
 
-<Layout title={title} content={content}>
-  {result.component && <ApiKeyError error={result.error} />}
-  {
-    !result.component && result.error && (
-      <GenerationError error={result.error} flavorId={result.flavorId} />
-    )
-  }
+<Layout title={title}>
+  <div
+    id="page-shell"
+    data-query={slugData.query}
+    data-flavor={currentFlavorId}
+    data-params={JSON.stringify(slugData.params)}
+  >
+    <!-- Loading State -->
+    <div id="loading-state" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Generiere Seite…</p>
+    </div>
+
+    <!-- Generated content will be injected here -->
+    <div id="generated-content" style="display:none;"></div>
+
+    <!-- Error templates (cloned by JS when needed) -->
+    <template id="tpl-api-key-error">
+      <div class="api-key-error-container">
+        <div class="error-content">
+          <div class="icon">🔑</div>
+          <h1 class="error-title">API Key erforderlich</h1>
+          <p class="error-subtitle">
+            Um das URLverse zu erkunden, benötigen wir deinen Schlüssel zum
+            Universum.
+          </p>
+          <div class="error-card">
+            <p class="error-message" data-slot="error-message"></p>
+            <p class="error-hint">
+              Setzen Sie Ihren persönlichen Gemini API Key in den Einstellungen,
+              um generierte Inhalte zu sehen.
+            </p>
+            <div class="action-buttons">
+              <button class="settings-button" id="openSettingsFromError"
+                >⚙️ Einstellungen öffnen</button
+              >
+              <a href="/" class="home-button">🏠 Zur Startseite</a>
+            </div>
+          </div>
+          <details class="help-section">
+            <summary class="help-summary"
+              >Wie bekomme ich einen API Key?</summary
+            >
+            <ol class="help-list">
+              <li>
+                Gehen Sie zu <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank">Google AI Studio</a>
+              </li>
+              <li>Melden Sie sich mit Ihrem Google-Konto an</li>
+              <li>Klicken Sie auf "Create API Key"</li>
+              <li>Kopieren Sie den generierten Key</li>
+              <li>Öffnen Sie die Einstellungen in URLverse</li>
+              <li>Fügen Sie Ihren API Key ein und speichern Sie ihn</li>
+            </ol>
+          </details>
+        </div>
+      </div>
+    </template>
+
+    <template id="tpl-generation-error">
+      <div class="error-container default">
+        <h1 class="error-title">Fehler beim Laden der Seite</h1>
+        <p class="error-text">Es ist ein Fehler aufgetreten:</p>
+        <code class="error-code" data-slot="error-message"></code>
+        <p class="action-text">
+          <a href="/" class="default-link">← Zurück zur Startseite</a>
+        </p>
+      </div>
+    </template>
+  </div>
+
+  <script type="module" src="/src/scripts/page-generator.client.ts"></script>
 </Layout>
+
+<style>
+  /* Loading */
+  .loading-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+  }
+
+  .loading-spinner {
+    width: 56px;
+    height: 56px;
+    border: 3px solid rgba(102, 126, 234, 0.2);
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+
+  .loading-text {
+    color: rgba(255, 255, 255, 0.6);
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    margin: 0;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* API Key Error */
+  .api-key-error-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #ffffff;
+    padding: 2rem;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+      Arial, sans-serif;
+  }
+
+  .error-content {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: block;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .error-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: #ffffff;
+  }
+
+  .error-subtitle {
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    line-height: 1.625;
+  }
+
+  .error-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .error-message {
+    background: rgba(231, 76, 60, 0.25);
+    color: #ffcccc;
+    border: 1px solid rgba(231, 76, 60, 0.5);
+    padding: 1rem;
+    border-radius: 0.375rem;
+    margin-bottom: 1.5rem;
+    font-family: "SF Mono", Monaco, Consolas, "Courier New", monospace;
+    font-size: 0.875rem;
+    text-align: left;
+  }
+
+  .error-hint {
+    margin-bottom: 2rem;
+    line-height: 1.625;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .settings-button,
+  .home-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.15s ease-in-out;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .settings-button:hover,
+  .home-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+
+  .help-section {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    text-align: left;
+    color: #ffffff;
+  }
+
+  .help-summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #ffd700;
+    user-select: none;
+    list-style: none;
+  }
+
+  .help-summary::-webkit-details-marker {
+    display: none;
+  }
+  .help-summary::before {
+    content: "▶ ";
+    font-size: 0.75rem;
+  }
+  details[open] .help-summary::before {
+    content: "▼ ";
+  }
+
+  .help-list {
+    margin: 1rem 0 0 0;
+    padding-left: 1.5rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.625;
+  }
+
+  .help-list li {
+    margin-bottom: 0.25rem;
+  }
+  .help-list a {
+    color: #ffd700;
+    text-decoration: none;
+    border-bottom: 1px dashed #ffd700;
+  }
+  .help-list a:hover {
+    border-bottom-style: solid;
+  }
+
+  /* Generation Error */
+  .error-container.default {
+    max-width: 600px;
+    margin: 4rem auto;
+    padding: 2rem;
+    font-family: Arial, sans-serif;
+  }
+
+  .default .error-title {
+    color: #e74c3c;
+  }
+
+  .error-code {
+    display: block;
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    background: #f8f9fa;
+    color: #e74c3c;
+  }
+
+  .default-link {
+    color: #3498db;
+    text-decoration: none;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
