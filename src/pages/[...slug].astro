@@ -41,15 +41,25 @@ if (!apiKeyValidation.isValid) {
     Astro.request,
   );
   const genResult = await pageGenerator.generatePage(slugData, currentFlavorId);
-  result = {
-    component: false,
-    content: genResult.content,
-    error: genResult.error,
-    flavorId: currentFlavorId,
-  };
 
-  if (result.error) {
+  if (genResult.error === "INVALID_API_KEY") {
+    result = {
+      component: true,
+      error: "Der verwendete API Key ist ungültig oder abgelaufen.",
+      flavorId: currentFlavorId,
+    };
     title = config.app.errorTitle;
+  } else {
+    result = {
+      component: false,
+      content: genResult.content,
+      error: genResult.error,
+      flavorId: currentFlavorId,
+    };
+
+    if (result.error) {
+      title = config.app.errorTitle;
+    }
   }
 }
 
