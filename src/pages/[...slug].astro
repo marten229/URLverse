@@ -3,6 +3,7 @@ import Layout from "../components/Layout.astro";
 import { FlavorService } from "../services/flavor-service";
 import { parseSlugData } from "../utils/slug-parser";
 import { config } from "../lib/config";
+import Curtain from "../components/Curtain.astro";
 
 export const prerender = false;
 
@@ -20,6 +21,11 @@ const title = slugData.query || config.app.defaultTitle;
     data-flavor={currentFlavorId}
     data-params={JSON.stringify(slugData.params)}
   >
+    <!-- Cinema curtain overlay — animated away once content is ready -->
+    <Curtain />
+
+    <!-- Loading State -->
+
     <!-- Loading State -->
     <div id="loading-state" class="loading-container">
       <div class="loading-spinner"></div>
@@ -60,7 +66,8 @@ const title = slugData.query || config.app.defaultTitle;
               <li>
                 Gehen Sie zu <a
                   href="https://aistudio.google.com/app/apikey"
-                  target="_blank">Google AI Studio</a>
+                  target="_blank">Google AI Studio</a
+                >
               </li>
               <li>Melden Sie sich mit Ihrem Google-Konto an</li>
               <li>Klicken Sie auf "Create API Key"</li>
@@ -89,6 +96,22 @@ const title = slugData.query || config.app.defaultTitle;
 </Layout>
 
 <style>
+  /*
+   * When the user arrives via a curtain-intercepted link, the inline script
+   * adds `curtain-nav` to <html> before the first paint. This rule hides the
+   * loading spinner immediately so only the closed curtain (with its own
+   * loading indicator) is visible.
+   */
+  :global(html.curtain-nav) .loading-container {
+    display: none !important;
+  }
+
+  /* Remove from layout after animation so it can never block pointer events */
+  #curtain-overlay.is-done {
+    display: none;
+  }
+
+  /* ── Loading ─────────────────────────────────────────────────────────────── */
   /* Loading */
   .loading-container {
     min-height: 100vh;

@@ -28,7 +28,7 @@
 }
 
 /* Header */
-.settings-panel__header {
+.settings-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -37,13 +37,13 @@
     color: white;
 }
 
-.settings-panel__header h3 {
+.settings-title {
     margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
 }
 
-.settings-panel__close {
+.settings-close {
     background: none;
     border: none;
     color: white;
@@ -59,12 +59,12 @@
     justify-content: center;
 }
 
-.settings-panel__close:hover {
+.settings-close:hover {
     background: rgba(255, 255, 255, 0.2);
 }
 
 /* Content */
-.settings-panel__content {
+.settings-content {
     padding: 0;
     max-height: calc(80vh - 100px);
     overflow-y: auto;
@@ -80,7 +80,7 @@
     border-bottom: none;
 }
 
-.settings-section h4 {
+.settings-section-title {
     margin: 0 0 0.5rem 0;
     font-size: 1.1rem;
     font-weight: 600;
@@ -98,6 +98,28 @@
 .settings-field {
     display: flex;
     flex-direction: column;
+    gap: 0.75rem;
+}
+
+.settings-input-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.settings-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.settings-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e1e5e9;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: flex-end;
     gap: 0.75rem;
 }
 
@@ -176,7 +198,7 @@
 }
 
 /* Buttons */
-.btn {
+.settings-btn {
     padding: 0.75rem 1.25rem;
     border: none;
     border-radius: 8px;
@@ -192,26 +214,54 @@
     min-width: 100px;
 }
 
-.btn--primary {
+.settings-btn--primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
 }
 
-.btn--primary:hover {
+.settings-btn--primary:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-.btn--secondary {
+.settings-btn--secondary {
     background: #f8f9fa;
     color: #333;
     border: 1px solid #e1e5e9;
 }
 
-.btn--secondary:hover {
+.settings-btn--secondary:hover {
     background: #e9ecef;
     border-color: #adb5bd;
     transform: translateY(-1px);
+}
+
+.settings-btn--danger {
+    background: #e53e3e;
+    color: white;
+    border: none;
+}
+
+.settings-btn--danger:hover {
+    background: #c53030;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+}
+
+.settings-hint {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.settings-hint a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.settings-hint a:hover {
+    text-decoration: underline;
 }
 
 /* Status Messages */
@@ -283,7 +333,7 @@
         max-height: 90vh;
     }
 
-    .settings-panel__header,
+    .settings-header,
     .settings-section {
         padding: 1rem;
     }
@@ -308,7 +358,7 @@
         border-bottom-color: #333;
     }
 
-    .settings-section h4 {
+    .settings-section-title {
         color: #fff;
     }
 
@@ -339,15 +389,20 @@
         border-color: #555;
     }
 
-    .btn--secondary {
+    .settings-btn--secondary {
         background: #2d2d2d;
         color: #fff;
         border-color: #444;
     }
 
-    .btn--secondary:hover {
+    .settings-btn--secondary:hover {
         background: #3d3d3d;
         border-color: #555;
+    }
+
+    .settings-footer {
+        background: #1a1a1a;
+        border-color: #333;
     }
 
     .settings-help p {

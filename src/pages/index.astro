@@ -5,75 +5,81 @@ import { FlavorService } from "../services/flavor-service";
 export const prerender = false;
 
 const flavors = getAllFlavors();
-const currentFlavorId = FlavorService.getCurrentFlavorFromRequest(Astro.request);
-const currentFlavor = flavors.find(f => f.id === currentFlavorId);
+const currentFlavorId = FlavorService.getCurrentFlavorFromRequest(
+  Astro.request,
+);
+const currentFlavor = flavors.find((f) => f.id === currentFlavorId);
+import Curtain from "../components/Curtain.astro";
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>URLverse - Infinite Web Generator</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="stylesheet" href="/src/styles/main.css" />
-</head>
-<body class="homepage">
-  <div class="homepage__container">
-    <div class="homepage__logo">🌐</div>
-    <h1 class="homepage__title">URLverse</h1>
-    <p class="homepage__subtitle">
-      Verwandle jede URL in eine einzigartige Webseite<br>
-      Powered by AI • Infinite Möglichkeiten
-    </p>
-    
-    <div class="homepage__current-flavor">
-      🎨 Aktueller Stil: <strong>{currentFlavor?.name || 'Standard'}</strong>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URLverse - Infinite Web Generator</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body class="homepage">
+    <Curtain />
+    <div class="homepage__container">
+      <div class="homepage__logo">🌐</div>
+      <h1 class="homepage__title">URLverse</h1>
+      <p class="homepage__subtitle">
+        Verwandle jede URL in eine einzigartige Webseite<br />
+        Powered by AI • Infinite Möglichkeiten
+      </p>
+
+      <div class="homepage__current-flavor">
+        🎨 Aktueller Stil: <strong>{currentFlavor?.name || "Standard"}</strong>
+      </div>
+
+      <input
+        type="text"
+        class="homepage__url-input"
+        placeholder="Gib eine URL ein... z.B. /blog/mein-artikel"
+        id="urlInput"
+      />
+
+      <div class="homepage__examples">
+        <a href="/blog/ki-revolution-2024" class="homepage__example-link">
+          📝 Blog: KI Revolution
+        </a>
+        <a href="/shop/zeitreise-gadgets" class="homepage__example-link">
+          🛒 Shop: Zeitreise Gadgets
+        </a>
+        <a href="/unternehmen/quantum-solutions" class="homepage__example-link">
+          🏢 Unternehmen: Quantum Solutions
+        </a>
+        <a href="/medizin/nano-chirurgie" class="homepage__example-link">
+          🏥 Medizin: Nano-Chirurgie
+        </a>
+        <a
+          href="/forum/diskussion/virtual-reality"
+          class="homepage__example-link"
+        >
+          💬 Forum: Virtual Reality
+        </a>
+        <a href="/dating/für-mikroben" class="homepage__example-link">
+          💕 Dating: Für Mikroben
+        </a>
+      </div>
+
+      <div class="homepage__admin-actions">
+        <a href="/flavor" class="homepage__admin-link"> 🎨 Stil auswählen </a>
+        <button id="openSettingsFromHome" class="homepage__settings-link">
+          🔑 API Key & Einstellungen
+        </button>
+      </div>
+
+      <div class="homepage__info">
+        URLverse generiert für jede eingegebene URL eine unique, kreative
+        Webseite.<br />
+        Jeder Pfad wird zu einem neuen Abenteuer im digitalen Paralleluniversum.
+      </div>
     </div>
-    
-    <input 
-      type="text" 
-      class="homepage__url-input" 
-      placeholder="Gib eine URL ein... z.B. /blog/mein-artikel"
-      id="urlInput"
-    />
-    
-    <div class="homepage__examples">
-      <a href="/blog/ki-revolution-2024" class="homepage__example-link">
-        📝 Blog: KI Revolution
-      </a>
-      <a href="/shop/zeitreise-gadgets" class="homepage__example-link">
-        🛒 Shop: Zeitreise Gadgets
-      </a>
-      <a href="/unternehmen/quantum-solutions" class="homepage__example-link">
-        🏢 Unternehmen: Quantum Solutions
-      </a>
-      <a href="/medizin/nano-chirurgie" class="homepage__example-link">
-        🏥 Medizin: Nano-Chirurgie
-      </a>
-      <a href="/forum/diskussion/virtual-reality" class="homepage__example-link">
-        💬 Forum: Virtual Reality
-      </a>
-      <a href="/dating/für-mikroben" class="homepage__example-link">
-        💕 Dating: Für Mikroben
-      </a>
-    </div>
-    
-    <div class="homepage__admin-actions">
-      <a href="/flavor" class="homepage__admin-link">
-        🎨 Stil auswählen
-      </a>
-      <button id="openSettingsFromHome" class="homepage__settings-link">
-        🔑 API Key & Einstellungen
-      </button>
-    </div>
-    
-    <div class="homepage__info">
-      URLverse generiert für jede eingegebene URL eine unique, kreative Webseite.<br>
-      Jeder Pfad wird zu einem neuen Abenteuer im digitalen Paralleluniversum.
-    </div>
-  </div>
-  
-  <script type="module" src="/src/scripts/homepage.ts"></script>
-</body>
+
+    <script type="module" src="/src/scripts/homepage.ts"></script>
+  </body>
 </html>

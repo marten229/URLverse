@@ -14,6 +14,7 @@ import { cleanHtmlContent, replaceBrokenImages, addParametersToLinks } from '../
 import { CookieManager } from '../utils/cookie-utils';
 import { config } from '../lib/config';
 import { SettingsUI } from '../components/SettingsUI';
+import { openCurtain, closeCurtain, applyPreClosedStateIfNeeded, initNavigationCurtain } from './curtain-animation';
 
 // ── Read page context from the server-rendered shell ────────────────────────
 // The Astro page embeds the URL context in `data-*` attributes on the shell
@@ -40,6 +41,8 @@ function showContent(html: string) {
     loadingEl.style.display = 'none';
     contentEl.style.display = '';
     contentEl.innerHTML = html;
+    // Trigger the cinema curtain reveal now that content is ready in the DOM.
+    openCurtain();
 }
 
 /**
@@ -138,6 +141,18 @@ async function generatePage() {
         const message = err instanceof Error ? err.message : 'Unbekannter Fehler';
         showTemplate('tpl-generation-error', message);
     }
+}
+
+// Set up curtain-intercepted navigation so links close the curtain over the
+// current page before the browser navigates to the next one.
+initNavigationCurtain();
+
+// If we arrived here via a curtain-intercepted link, the curtain is already
+// visually closed. Skip the close animation and go straight to generating.
+const alreadyClosed = applyPreClosedStateIfNeeded();
+if (!alreadyClosed) {
+    // First visit or direct URL — close the curtain over the loading spinner.
+    closeCurtain();
 }
 
 generatePage();

@@ -1,29 +1,33 @@
 ---
 import { getAllFlavors, getFlavorById } from "../lib/prompt-flavors";
 import { FlavorService } from "../services/flavor-service";
+import Curtain from "../components/Curtain.astro";
 
 export const prerender = false;
 
 const flavors = getAllFlavors();
 
-const currentFlavorId = FlavorService.getCurrentFlavorFromRequest(Astro.request);
-const currentFlavor = getFlavorById(currentFlavorId);
+const currentFlavorId = FlavorService.getCurrentFlavorFromRequest(
+  Astro.request,
+);
+const currentFlavor = getFlavorById(currentFlavorId) || flavors[0];
 
-// Handle flavor change
+// Handle flavor change submission via POST
+// This updates the cookie and redirects back to the page with a success flag.
 if (Astro.request.method === "POST") {
   try {
     const formData = await Astro.request.formData();
     const selectedFlavorId = formData.get("flavorId") as string;
-    
+
     if (selectedFlavorId && FlavorService.isValidFlavor(selectedFlavorId)) {
       const cookieValue = FlavorService.saveFlavorToCookie(selectedFlavorId);
-      
+
       return new Response(null, {
         status: 302,
         headers: {
-          'Location': `/flavor?success=flavor-changed&flavor=${selectedFlavorId}`,
-          'Set-Cookie': cookieValue
-        }
+          Location: `/flavor?success=flavor-changed&flavor=${selectedFlavorId}`,
+          "Set-Cookie": cookieValue,
+        },
       });
     }
   } catch (error) {
@@ -36,91 +40,126 @@ const success = url.searchParams.get("success");
 const selectedFlavorFromUrl = url.searchParams.get("flavor");
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>URLverse - Stil auswählen</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="stylesheet" href="/src/styles/main.css" />
-</head>
-<body class="admin">
-  <div class="admin__container">
-    <a href="/" class="admin__back-link">← Zurück zur URLverse</a>
-    
-    <div class="admin__header">
-      <h1 class="admin__title">🎨 Stil auswählen</h1>
-      <p class="admin__subtitle">Wähle deinen bevorzugten Stil für generierte Seiten</p>
-    </div>
-    
-    {success === "flavor-changed" && (
-      <div class="admin__success">
-        ✅ Stil erfolgreich geändert zu: <strong>{getFlavorById(selectedFlavorFromUrl || currentFlavorId).name}</strong>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URLverse - Stil auswählen</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body class="admin">
+    <Curtain />
+    <div class="admin__container">
+      <a href="/" class="admin__back-link">← Zurück zur URLverse</a>
+
+      <div class="admin__header">
+        <h1 class="admin__title">🎨 Stil auswählen</h1>
+        <p class="admin__subtitle">
+          Wähle deinen bevorzugten Stil für generierte Seiten
+        </p>
       </div>
-    )}
-    
-    <div class="admin__current-flavor">
-      <h2>🌟 Aktuell ausgewählt</h2>
-      <div class="current-flavor-info">
-        <strong>{currentFlavor.name}</strong>
-        <span class="current-flavor-desc">{currentFlavor.description}</span>
-      </div>
-    </div>
-    
-    <div class="admin__flavors-grid">
-      {flavors.map((flavor) => (
-        <div class={`admin__flavor-card ${flavor.id === currentFlavor.id ? 'admin__flavor-card--current' : ''}`}>
-          <div class="admin__flavor-header">
-            <h3 class="admin__flavor-title">{flavor.name}</h3>
-            {flavor.id === currentFlavor.id && (
-              <span class="admin__flavor-badge">Aktiv</span>
-            )}
+
+      {
+        success === "flavor-changed" && (
+          <div class="admin__success">
+            ✅ Stil erfolgreich geändert zu:{" "}
+            <strong>
+              {getFlavorById(selectedFlavorFromUrl || currentFlavorId)?.name ||
+                "Unbekannt"}
+            </strong>
           </div>
-          
-          <p class="admin__flavor-description">{flavor.description}</p>
-          
-          {flavor.examples && flavor.examples.length > 0 && (
-            <div class="admin__flavor-examples">
-              <h4>Beispiel-Inhalte:</h4>
-              <ul>
-                {flavor.examples.map((example) => (
-                  <li>{example}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          <form method="POST" class="admin__flavor-form">
-            <input type="hidden" name="flavorId" value={flavor.id} />
-            <button 
-              type="submit" 
-              class={`admin__select-button ${flavor.id === currentFlavor.id ? 'admin__select-button--active' : ''}`}
-              disabled={flavor.id === currentFlavor.id}
-            >
-              {flavor.id === currentFlavor.id ? '✓ Ausgewählt' : 'Diesen Stil wählen'}
-            </button>
-          </form>
+        )
+      }
+
+      <div class="admin__current-flavor">
+        <h2>🌟 Aktuell ausgewählt</h2>
+        <div class="current-flavor-info">
+          <strong>{currentFlavor.name}</strong>
+          <span class="current-flavor-desc">{currentFlavor.description}</span>
         </div>
-      ))}
-    </div>
-    
-    <div class="admin__test-section">
-      <h3 class="admin__test-title">🧪 Stil ausprobieren</h3>
-      <p class="admin__test-description">Teste deinen gewählten Stil mit diesen Beispiel-URLs:</p>
-      <div class="admin__test-urls">
-        <a href="/blog/ki-revolution-2024" class="admin__test-url">/blog/ki-revolution-2024</a>
-        <a href="/shop/zeitreise-gadgets" class="admin__test-url">/shop/zeitreise-gadgets</a>
-        <a href="/unternehmen/quantum-solutions" class="admin__test-url">/unternehmen/quantum-solutions</a>
-        <a href="/medizin/nano-chirurgie" class="admin__test-url">/medizin/nano-chirurgie</a>
-        <a href="/forum/diskussion/virtual-reality" class="admin__test-url">/forum/diskussion/virtual-reality</a>
       </div>
-      
-      <div class="admin__info-box">
-        <h4>💡 Tipp:</h4>
-        <p>Nachdem du einen Stil ausgewählt hast, werden alle neu generierten Seiten in diesem Stil erstellt. Du kannst den Stil jederzeit hier ändern.</p>
+
+      <div class="admin__flavors-grid">
+        {
+          flavors.map((flavor) => (
+            <div
+              class={`admin__flavor-card ${flavor.id === currentFlavor.id ? "admin__flavor-card--current" : ""}`}
+            >
+              <div class="admin__flavor-header">
+                <h3 class="admin__flavor-title">{flavor.name}</h3>
+                {flavor.id === currentFlavor.id && (
+                  <span class="admin__flavor-badge">Aktiv</span>
+                )}
+              </div>
+
+              <p class="admin__flavor-description">{flavor.description}</p>
+
+              {flavor.examples && flavor.examples.length > 0 && (
+                <div class="admin__flavor-examples">
+                  <h4>Beispiel-Inhalte:</h4>
+                  <ul>
+                    {flavor.examples.map((example) => (
+                      <li>{example}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <form method="POST" class="admin__flavor-form">
+                <input type="hidden" name="flavorId" value={flavor.id} />
+                <button
+                  type="submit"
+                  class={`admin__select-button ${flavor.id === currentFlavor.id ? "admin__select-button--active" : ""}`}
+                  disabled={flavor.id === currentFlavor.id}
+                >
+                  {flavor.id === currentFlavor.id
+                    ? "✓ Ausgewählt"
+                    : "Diesen Stil wählen"}
+                </button>
+              </form>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="admin__test-section">
+        <h3 class="admin__test-title">🧪 Stil ausprobieren</h3>
+        <p class="admin__test-description">
+          Teste deinen gewählten Stil mit diesen Beispiel-URLs:
+        </p>
+        <div class="admin__test-urls">
+          <a href="/blog/ki-revolution-2024" class="admin__test-url"
+            >/blog/ki-revolution-2024</a
+          >
+          <a href="/shop/zeitreise-gadgets" class="admin__test-url"
+            >/shop/zeitreise-gadgets</a
+          >
+          <a href="/unternehmen/quantum-solutions" class="admin__test-url"
+            >/unternehmen/quantum-solutions</a
+          >
+          <a href="/medizin/nano-chirurgie" class="admin__test-url"
+            >/medizin/nano-chirurgie</a
+          >
+          <a href="/forum/diskussion/virtual-reality" class="admin__test-url"
+            >/forum/diskussion/virtual-reality</a
+          >
+        </div>
+
+        <div class="admin__info-box">
+          <h4>💡 Tipp:</h4>
+          <p>
+            Nachdem du einen Stil ausgewählt hast, werden alle neu generierten
+            Seiten in diesem Stil erstellt. Du kannst den Stil jederzeit hier
+            ändern.
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-</body>
+    <script>
+      import { initNavigationCurtain } from "../scripts/curtain-animation";
+      initNavigationCurtain();
+    </script>
+  </body>
 </html>

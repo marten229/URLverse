@@ -9,15 +9,19 @@ import { domReady } from './dom-utils';
 import { URLInputHandler } from './url-input-handler';
 import { SettingsUI } from '../components/SettingsUI';
 import { SettingsManager } from '../utils/settings-manager';
+import { initNavigationCurtain, navigateTo } from './curtain-animation';
 
 domReady(() => {
+  // Initialize link interception for the example links
+  initNavigationCurtain();
+
   const urlInputHandler = new URLInputHandler({
     inputSelector: '#urlInput',
     autoFocus: true,
     placeholder: 'Gib eine URL ein... z.B. /blog/mein-artikel',
     onNavigate: (url: string) => {
       console.log('Navigating to:', url);
-      window.location.href = url;
+      navigateTo(url);
     }
   });
 
