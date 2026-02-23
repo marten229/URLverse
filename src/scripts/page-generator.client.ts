@@ -76,6 +76,11 @@ function showTemplate(templateId: string, errorMessage: string) {
         const settings = SettingsUI.initialize();
         settings.open();
     });
+
+    // Lift the curtain so the error page is actually visible.
+    // Without this call the curtain stays closed indefinitely because only
+    // showContent() triggers openCurtain() in the success path.
+    openCurtain();
 }
 
 // ── Main generation flow ─────────────────────────────────────────────────────
